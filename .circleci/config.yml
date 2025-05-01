@@ -9,6 +9,8 @@ jobs:
     steps:
       - checkout
       - run: mvn clean install
+        command:
+          echo 'Hello World - Test FoodOrder-Buddy Pipeline'
       - store_artifacts:
           path: target
           destination: target
