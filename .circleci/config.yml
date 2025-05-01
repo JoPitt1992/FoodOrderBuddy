@@ -8,10 +8,7 @@ jobs:
       MAVEN_CLI_OPTS: "--batch-mode"
     steps:
       - checkout
-      - run:
-        command: |
-          mvn clean install
-          echo 'Hello World - Test FoodOrder-Buddy Pipeline'
+      - run: mvn clean install
       - store_artifacts:
           path: target
           destination: target
@@ -25,14 +22,26 @@ jobs:
 
   build-docker-image:
     docker:
-      - image: cimg/base:stable
-      steps:
-        - checkout
-        - run: echo "Building Docker image..."
-
+      - image: circleci/openjdk:19-jdk
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.7
+      - run:
+          name: Build Docker Image
+          command: docker build -t my-app .
+      - run:
+          name: Push Docker Image
+          command: docker push my-app
 
 workflows:
   version: 2
   build-and-test:
     jobs:
       - build
+      - test:
+          requires:
+            - build
+      - build-docker-image:
+          requires:
+            - test
