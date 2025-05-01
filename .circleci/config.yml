@@ -8,8 +8,9 @@ jobs:
       MAVEN_CLI_OPTS: "--batch-mode"
     steps:
       - checkout
-      - run: mvn clean install
-        command:
+      - run:
+        command: |
+          mvn clean install
           echo 'Hello World - Test FoodOrder-Buddy Pipeline'
       - store_artifacts:
           path: target
@@ -24,6 +25,10 @@ jobs:
 
   build-docker-image:
     docker:
+      - image: cimg/base:stable
+      steps:
+        - checkout
+        - run: echo "Building Docker image..."
 
 
 workflows:
