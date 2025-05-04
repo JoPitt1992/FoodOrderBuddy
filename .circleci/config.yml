@@ -13,6 +13,7 @@ jobs:
       - store_artifacts:
           path: target
           destination: target
+
   test:
     docker:
       - image: maven:3.8.1-openjdk-17-slim
@@ -23,20 +24,22 @@ jobs:
           path: reports
           destination: reports
 
-  build-docker-image:
-    docker:
-      - image: cimg/azure:2025.01
-    steps:
-      - checkout
-      - docker/install-docker-tools
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and push Docker image
-          command: |
-            docker build -t vaadincrm.azurecr.io/vaadincrm:latest .
-            echo $DOCKER_PASS | docker login vaadincrm.azurecr.io -u $DOCKER_USER --password-stdin
-            docker push vaadincrm.azurecr.io/vaadincrm:latest
+  #build-docker-image:
+  #  docker:
+  #    - image: cimg/azure:2025.01
+  #  steps:
+  #    - checkout
+  #    - docker/install-docker-tools
+  #    - setup_remote_docker:
+  #        docker_layer_caching: true
+  #    - run:
+  #        name: Build and push Docker image
+  #        command: |
+  #          docker build -t vaadincrm.azurecr.io/vaadincrm:latest .
+  #          echo $DOCKER_PASS | docker login vaadincrm.azurecr.io -u $DOCKER_USER --password-stdin
+  #          docker push vaadincrm.azurecr.io/vaadincrm:latest
+
+
 workflows:
   build-test-and-deploy:
     jobs:
@@ -44,4 +47,4 @@ workflows:
       - test:
           requires:
             - build
-      - build-docker-image
+  #    - build-docker-image
