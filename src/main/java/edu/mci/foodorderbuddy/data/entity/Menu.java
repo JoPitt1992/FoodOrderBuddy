@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 
 //test
-//Test Benni
+//Test Benni 2
 @Entity
 @Table
 public class Menu {
