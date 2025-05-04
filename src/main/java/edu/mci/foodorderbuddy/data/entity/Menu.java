@@ -3,7 +3,7 @@ package edu.mci.foodorderbuddy.data.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 
-
+//test
 @Entity
 @Table
 public class Menu {
