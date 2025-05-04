@@ -74,6 +74,7 @@ jobs:
               --allow-unauthenticated
 
 workflows:
+  version: 2
   build-and-deploy:
     jobs:
       - build
@@ -83,64 +84,3 @@ workflows:
           filters:
             branches:
               only: master
-
-
-
-
-
-
-
-
-
-
-
-version: '2.1'
-orbs:
-  docker: circleci/docker@2.2.0
-jobs:
-  build:
-    docker:
-      - image: maven:3.9.6-eclipse-temurin-21
-    environment:
-      MAVEN_CLI_OPTS: "--batch-mode"
-    steps:
-      - checkout
-      - run: mvn $MAVEN_CLI_OPTS -Dvaadin.offlineKey="eyJraWQiOiI1NDI3NjRlNzAwMDkwOGU2NWRjM2ZjMWRhYmY0ZTJjZDI4OTY2NzU4IiwidHlwIjoiSldUIiwiYWxnIjoiRVM1MTIifQ.eyJhbGxvd2VkUHJvZHVjdHMiOlsidmFhZGluLWNoYXJ0cyIsInZhYWRpbi10ZXN0YmVuY2giLCJ2YWFkaW4tZGVzaWduZXIiLCJ2YWFkaW4tY2hhcnQiLCJ2YWFkaW4tYm9hcmQiLCJ2YWFkaW4tY29uZmlybS1kaWFsb2ciLCJ2YWFkaW4tY29va2llLWNvbnNlbnQiLCJ2YWFkaW4tcmljaC10ZXh0LWVkaXRvciIsInZhYWRpbi1ncmlkLXBybyIsInZhYWRpbi1tYXAiLCJ2YWFkaW4tc3ByZWFkc2hlZXQtZmxvdyIsInZhYWRpbi1jcnVkIiwidmFhZGluLWNvcGlsb3QiLCJ2YWFkaW4tZGFzaGJvYXJkIl0sInN1YiI6Ijg1ZWJhMzBiLWQ4ZjgtNDBmMC05OTE0LTYyODU3MjAyNGM5OSIsInZlciI6MSwiaXNzIjoiVmFhZGluIiwiYWxsb3dlZEZlYXR1cmVzIjpbImNlcnRpZmljYXRpb25zIiwic3ByZWFkc2hlZXQiLCJ0ZXN0YmVuY2giLCJkZXNpZ25lciIsImNoYXJ0cyIsImJvYXJkIiwiYXBwc3RhcnRlciIsInZpZGVvdHJhaW5pbmciLCJwcm8tcHJvZHVjdHMtMjAyMjEwIl0sIm1hY2hpbmVfaWQiOiJtaWQtNDhhZDNjZTMtMjY2ZDg1MTMiLCJzdWJzY3JpcHRpb24iOiJWYWFkaW4gUHJvIiwic3Vic2NyaXB0aW9uS2V5IjpudWxsLCJuYW1lIjoiSm9oYW5uZXMgUGl0dGVybGUiLCJidWlsZF90eXBlcyI6WyJkZXZlbG9wbWVudCIsInByb2R1Y3Rpb24iXSwiZXhwIjoxNzUwNDY0MDAwLCJpYXQiOjE3NDYzNDQ2MjMsImFjY291bnQiOiJNYW5hZ2VtZW50IENlbnRlciBJbm5zYnJ1Y2sifQ.ABv_OxA25Cdmr8tAmIXkJbcbxSHW0FYD3DvsGxJq0MN02-A_RhQYkGCJsjtOIrvSXonNx-nBcOTdQxy5heO7-KKhASlvHEpFfWFNSwz_UI7U5PRREssqu9raJTCLfMAGaRpkoPrnM0NAATuWZLUitsuk8a9k4wuL100B-v0FFyFhIipm" clean package -Pproduction -e
-      - store_artifacts:
-          path: target
-          destination: target
-
-  test:
-    docker:
-      - image: maven:3.9.6-eclipse-temurin-21
-    steps:
-      - checkout
-      - run: mvn test -e
-      - store_artifacts:
-          path: reports
-          destination: reports
-
-  #build-docker-image:
-  #  docker:
-  #    - image: cimg/azure:2025.01
-  #  steps:
-  #    - checkout
-  #    - docker/install-docker-tools
-  #    - setup_remote_docker:
-  #        docker_layer_caching: true
-  #    - run:
-  #        name: Build and push Docker image
-  #        command: |
-  #          docker build -t vaadincrm.azurecr.io/vaadincrm:latest .
-  #          echo $DOCKER_PASS | docker login vaadincrm.azurecr.io -u $DOCKER_USER --password-stdin
-  #          docker push vaadincrm.azurecr.io/vaadincrm:latest
-
-
-workflows:
-  build-test-and-deploy:
-    jobs:
-      - build
-      - test:
-          requires:
-            - build
-  #    - build-docker-image
