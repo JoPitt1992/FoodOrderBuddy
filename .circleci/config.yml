@@ -1,3 +1,100 @@
+version: 2.1
+
+executors:
+  docker-executor:
+    docker:
+      - image: cimg/openjdk:21.0
+
+jobs:
+  build:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      - run:
+          name: Build JAR (Production)
+          command: mvn clean package -DskipTests -Pproduction -Dvaadin.offlineKey="eyJraWQiOiI1NDI3NjRlNzAwMDkwOGU2NWRjM2ZjMWRhYmY0ZTJjZDI4OTY2NzU4IiwidHlwIjoiSldUIiwiYWxnIjoiRVM1MTIifQ.eyJhbGxvd2VkUHJvZHVjdHMiOlsidmFhZGluLWNoYXJ0cyIsInZhYWRpbi10ZXN0YmVuY2giLCJ2YWFkaW4tZGVzaWduZXIiLCJ2YWFkaW4tY2hhcnQiLCJ2YWFkaW4tYm9hcmQiLCJ2YWFkaW4tY29uZmlybS1kaWFsb2ciLCJ2YWFkaW4tY29va2llLWNvbnNlbnQiLCJ2YWFkaW4tcmljaC10ZXh0LWVkaXRvciIsInZhYWRpbi1ncmlkLXBybyIsInZhYWRpbi1tYXAiLCJ2YWFkaW4tc3ByZWFkc2hlZXQtZmxvdyIsInZhYWRpbi1jcnVkIiwidmFhZGluLWNvcGlsb3QiLCJ2YWFkaW4tZGFzaGJvYXJkIl0sInN1YiI6Ijg1ZWJhMzBiLWQ4ZjgtNDBmMC05OTE0LTYyODU3MjAyNGM5OSIsInZlciI6MSwiaXNzIjoiVmFhZGluIiwiYWxsb3dlZEZlYXR1cmVzIjpbImNlcnRpZmljYXRpb25zIiwic3ByZWFkc2hlZXQiLCJ0ZXN0YmVuY2giLCJkZXNpZ25lciIsImNoYXJ0cyIsImJvYXJkIiwiYXBwc3RhcnRlciIsInZpZGVvdHJhaW5pbmciLCJwcm8tcHJvZHVjdHMtMjAyMjEwIl0sIm1hY2hpbmVfaWQiOiJtaWQtNDhhZDNjZTMtMjY2ZDg1MTMiLCJzdWJzY3JpcHRpb24iOiJWYWFkaW4gUHJvIiwic3Vic2NyaXB0aW9uS2V5IjpudWxsLCJuYW1lIjoiSm9oYW5uZXMgUGl0dGVybGUiLCJidWlsZF90eXBlcyI6WyJkZXZlbG9wbWVudCIsInByb2R1Y3Rpb24iXSwiZXhwIjoxNzUwNDY0MDAwLCJpYXQiOjE3NDYzNDQ2MjMsImFjY291bnQiOiJNYW5hZ2VtZW50IENlbnRlciBJbm5zYnJ1Y2sifQ.ABv_OxA25Cdmr8tAmIXkJbcbxSHW0FYD3DvsGxJq0MN02-A_RhQYkGCJsjtOIrvSXonNx-nBcOTdQxy5heO7-KKhASlvHEpFfWFNSwz_UI7U5PRREssqu9raJTCLfMAGaRpkoPrnM0NAATuWZLUitsuk8a9k4wuL100B-v0FFyFhIipm" clean package -Pproduction -e
+
+
+      - run:
+          name: Build Docker Image
+          command: docker build -t foodorderbuddy-app .
+
+      - run:
+          name: Tag Docker Image
+          command: >
+            docker tag foodorderbuddy-app
+            europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  deploy:
+    executor: docker-executor
+    steps:
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Decode GCP Service Account Key
+          command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
+
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+              gpg --dearmor | \
+              sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+              sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud config set project foodorderbuddy
+            gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - run:
+          name: Push Docker Image
+          command: docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+
+      - run:
+          name: Deploy to Cloud Run
+          command: |
+            gcloud run deploy foodorderbuddy \
+              --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
+              --region=europe-west1 \
+              --platform=managed \
+              --allow-unauthenticated
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+
+
+
+
+
+
+
+
+
+
+
 version: '2.1'
 orbs:
   docker: circleci/docker@2.2.0
