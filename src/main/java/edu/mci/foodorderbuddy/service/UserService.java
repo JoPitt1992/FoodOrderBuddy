@@ -1,6 +1,6 @@
 package edu.mci.foodorderbuddy.service;
 
-import edu.mci.foodorderbuddy.data.entity.UserEntity;
+import edu.mci.foodorderbuddy.data.entity.Person;
 import edu.mci.foodorderbuddy.data.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public void updateUser(UserEntity updatedUser) {
+    public void updateUser(Person updatedUser) {
         userRepository.save(updatedUser);
     }
 }

@@ -10,7 +10,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import edu.mci.foodorderbuddy.data.entity.UserEntity;
+import edu.mci.foodorderbuddy.data.entity.Person;
 import edu.mci.foodorderbuddy.service.UserService;
 import jakarta.annotation.security.PermitAll;
 
@@ -25,7 +25,7 @@ public class MyProfileView extends VerticalLayout {
     private final TextField email = new TextField("E-Mail");
     private final Button save = new Button("Save");
 
-    private final Binder<UserEntity> binder = new Binder<>(UserEntity.class);
+    private final Binder<Person> binder = new Binder<>(Person.class);
     private final UserService userService;
 
     public MyProfileView(UserService userService) {

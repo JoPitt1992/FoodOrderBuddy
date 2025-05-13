@@ -9,7 +9,8 @@ import java.util.List;
 
 public interface MenuRepository extends JpaRepository<Menu, Long> {
     @Query("select m from Menu m " +
-            "where lower(m.menuName) like lower(concat('%', :searchTerm, '%')) " +
+            "where lower(m.menuTitle) like lower(concat('%', :searchTerm, '%')) " +
             "or lower(m.menuIngredients) like lower(concat('%', :searchTerm, '%'))")
     List<Menu> search(@Param("searchTerm") String searchTerm);
+    List<Menu> findByMenuDailyTrue();
 }
