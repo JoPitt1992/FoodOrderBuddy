@@ -9,21 +9,21 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 
 @PermitAll
-@Route(value = "orders", layout = MainLayout.class)
-@PageTitle("My Orders | Food Order Buddy")
-public class MyOrdersView extends VerticalLayout {
+@Route(value = "cart", layout = MainLayout.class)
+@PageTitle("Warenkorb | Food Order Buddy")
+public class CartView extends VerticalLayout {
     private final MenuService service;
 
-    public MyOrdersView(MenuService service) {
+    public CartView(MenuService service) {
         this.service = service;
         addClassName("dashboard-view");
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-        add(getContactStats());
+        add(exampleMethod());
     }
 
-    private Component getContactStats() {
-        Span stats = new Span(service.countMenu() + " Menüs stehen zur Auswahl");
-        stats.addClassNames("text-xl", "mt-m");
-        return stats;
+    private Component exampleMethod() {
+        Span message = new Span("CartView-Site under construction");
+        message.addClassNames("text-xl", "mt-m");
+        return message;
     }
 }

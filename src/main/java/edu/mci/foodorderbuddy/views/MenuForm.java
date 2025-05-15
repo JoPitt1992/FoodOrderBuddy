@@ -17,13 +17,13 @@ import com.vaadin.flow.shared.Registration;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 
 public class MenuForm extends FormLayout {
-    TextField menuName = new TextField("Menu name");
-    TextField menuIngredients = new TextField("Menu ingredients");
-    NumberField menuPrice = new NumberField("Menu price");
+    TextField menuTitle = new TextField("Menübezeichnung");
+    TextField menuIngredients = new TextField("Zutaten");
+    NumberField menuPrice = new NumberField("Preis");
 
-    Button save = new Button("Save");
-    Button delete = new Button("Delete");   // Optional: z. B. für Admins
-    Button close = new Button("Cancel");
+    Button save = new Button("Speichern");
+    Button delete = new Button("Löschen");   // Optional: z. B. für Admins
+    Button close = new Button("Abbrechen");
 
     private Menu menu;
 
@@ -35,12 +35,12 @@ public class MenuForm extends FormLayout {
         menuPrice.setMin(0.01);
         menuPrice.setStep(0.01);
         binder.forField(menuPrice)
-                .withValidator(new DoubleRangeValidator("Price must be greater than 0", 0.01, null))
+                .withValidator(new DoubleRangeValidator("Preis muss größer als 0 sein", 0.01, null))
                 .bind(Menu::getMenuPrice, Menu::setMenuPrice);
 
         binder.bindInstanceFields(this);
 
-        add(menuName,
+        add(menuTitle,
                 menuIngredients,
                 menuPrice,
                 createButtonsLayout());

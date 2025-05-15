@@ -30,7 +30,15 @@ public class SecurityConfig extends VaadinWebSecurity {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorize -> authorize.requestMatchers("/images/**").permitAll());
+        http.authorizeHttpRequests(authorize ->
+                authorize.requestMatchers("/images/**").permitAll()
+        );
+
+        http.formLogin(formLogin ->
+                formLogin
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/menu", true)
+        );
 
         super.configure(http);
 

@@ -17,7 +17,7 @@ import jakarta.annotation.security.PermitAll;
 
 @PermitAll
 @Route(value="menu", layout = MainLayout.class)
-@PageTitle("Menu | Food Order Buddy")
+@PageTitle("Speisekarte | Food Order Buddy")
 public class MenuView extends VerticalLayout {
     Grid<Menu> menuGrid = new Grid<>(Menu.class);
     TextField filterText = new TextField();
@@ -52,7 +52,7 @@ public class MenuView extends VerticalLayout {
         menuGrid.addClassNames("menu-grid");
         menuGrid.setSizeFull();
 
-        menuGrid.setColumns("menuName", "menuIngredients", "menuPrice");
+        menuGrid.setColumns("menuTitle", "menuIngredients", "menuPrice");
 
         menuGrid.getColumnByKey("menuPrice")
                 .setHeader("Price")
@@ -79,13 +79,13 @@ public class MenuView extends VerticalLayout {
 
 
     private HorizontalLayout getToolbar() {
-        filterText.setPlaceholder("Search your favorite menu...");
+        filterText.setPlaceholder("Finde dein Lieblingsmenü...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(e -> updateList());
         filterText.setWidth("300px");
 
-        Button addMenubutton = new Button("Add menu"); // nur für Admin
+        Button addMenubutton = new Button("Menü hinzufügen"); // nur für Admin
         addMenubutton.addClickListener(click -> addMenu());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addMenubutton);
@@ -125,7 +125,6 @@ public class MenuView extends VerticalLayout {
         menuGrid.asSingleSelect().clear();
         editMenu(new Menu());
     }
-
 
     private void updateList() {
         menuGrid.setItems(service.findAllMenus(filterText.getValue()));

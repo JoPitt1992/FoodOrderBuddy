@@ -21,7 +21,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void createHeader() {
-        H1 logo = new H1("Food-Order Buddy");
+        H1 logo = new H1("Food-Order-Buddy");
         logo.addClassNames("text-l", "m-m");
 
         Button logout = new Button("Log out", e -> securityService.logout());
@@ -36,19 +36,27 @@ public class MainLayout extends AppLayout {
     }
 
     private void createDrawer() {
-        RouterLink menuLink = new RouterLink("Menu", MenuView.class);
+        RouterLink menuLink = new RouterLink("Speisekarte", MenuView.class);
         menuLink.setHighlightCondition(HighlightConditions.sameLocation());
 
-        RouterLink myOrdersLink = new RouterLink("MyOrders", MyOrdersView.class);
-        myOrdersLink.setHighlightCondition(HighlightConditions.sameLocation());
+        RouterLink cartLink = new RouterLink("Warenkorb", CartView.class);
+        cartLink.setHighlightCondition(HighlightConditions.sameLocation());
 
-        RouterLink myProfileLink = new RouterLink("MyProfile", MyProfileView.class);
-        myProfileLink.setHighlightCondition(HighlightConditions.sameLocation());
+        RouterLink orderHistoryLink = new RouterLink("Bestellhistorie", OrderHistoryView.class);
+        orderHistoryLink.setHighlightCondition(HighlightConditions.sameLocation());
+
+        RouterLink personDataLink = new RouterLink("Benutzerdaten", PersonDataView.class);
+        personDataLink.setHighlightCondition(HighlightConditions.sameLocation());
+
+        RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
+        dashboardLink.setHighlightCondition(HighlightConditions.sameLocation());
 
         addToDrawer(new VerticalLayout(
                 menuLink,
-                myOrdersLink,
-                myProfileLink
+                cartLink,
+                orderHistoryLink,
+                personDataLink,
+                dashboardLink
         ));
     }
 }
