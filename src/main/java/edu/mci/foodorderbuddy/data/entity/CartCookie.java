@@ -1,7 +1,6 @@
 package edu.mci.foodorderbuddy.data.entity;
 
-import com.vaadin.flow.server.VaadinServletResponse;
-import jakarta.persistence.*;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,26 +9,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity
-@Table(name = "cart_cookie")
+
 public class CartCookie {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cookie_id")
-    //Fixe Id zuweisung zum finden und abspeichern
+
     private static final String cookieId = "FoodOrderBuddyCard";
     //Zeit in Sekunden welches das Coockie aktiv ist -> 60 * 60 * 24 * 30 -> 30 Tage
     private static final int cookieMaxAge = 60 * 60 * 24 * 30;
 
-    @Column(name = "cookie_value", nullable = false, unique = true)
     private String cookieValue;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "expires_at", nullable = false)
     private Date expiresAt;
 
-    @OneToOne
-    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
     public CartCookie() {}
