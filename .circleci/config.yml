@@ -32,6 +32,15 @@ jobs:
           root: .
           paths:
             - .
+      - run:
+          name: Save Docker Image
+          command: docker save europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest | gzip > image.tar.gz
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - image.tar.gz
+
 
   deploy:
     executor: docker-executor
@@ -40,7 +49,9 @@ jobs:
             docker_layer_caching: true
       - attach_workspace:
           at: .
-
+      - run:
+          name: Load Docker Image
+          command: gunzip -c image.tar.gz | docker load
       - run:
           name: Decode GCP Service Account Key
           command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
