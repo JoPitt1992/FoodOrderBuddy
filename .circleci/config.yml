@@ -87,8 +87,16 @@ jobs:
               --region=europe-west1 \
               --platform=managed \
               --allow-unauthenticated \
-              --add-cloudsql-instances=foodorderbuddy:europe-west1:foodorderbuddy-db \
               --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
+            
+            # For Google Cloud SQL
+            #gcloud run deploy foodorderbuddy \
+            #  --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
+            #  --region=europe-west1 \
+            #  --platform=managed \
+            #  --allow-unauthenticated \
+            #  --add-cloudsql-instances=foodorderbuddy:europe-west1:foodorderbuddy-db \
+            #  --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
 
 workflows:
   version: 2
