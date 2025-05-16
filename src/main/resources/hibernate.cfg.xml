@@ -6,15 +6,17 @@
     <session-factory>
         <!-- Datenbankverbindungseinstellungen -->
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5433/newtestdata</property>
-        <property name="hibernate.connection.username">myuser</property>
-        <property name="hibernate.connection.password">password</property>
+        <property name="hibernate.connection.url">
+            jdbc:postgresql:///foodorderbuddy?cloudSqlInstance=foodorderbuddy:europe-west1:foodorderbuddy-db&amp;socketFactory=com.google.cloud.sql.postgres.SocketFactory
+        </property>
+        <property name="hibernate.connection.username">postgres</property>
+        <property name="hibernate.connection.password">foodorderbuddy123</property>
+
 
         <!-- Hibernate-spezifische Einstellungen -->
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.hbm2ddl.auto">update</property>
-        <property name="hibernate.default_schema">public</property>
         <!-- Liste der Entity-Klassen -->
         <mapping class="edu.mci.foodorderbuddy.data.entity.Person"/>
         <mapping class="edu.mci.foodorderbuddy.data.entity.Cart"/>
