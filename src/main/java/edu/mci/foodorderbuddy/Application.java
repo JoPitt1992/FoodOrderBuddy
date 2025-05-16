@@ -30,7 +30,7 @@ public class Application implements AppShellConfigurator {
             String username = "postgres";
             String password = "foodorderbuddy123";
 
-            System.out.println("🔌 JDBC: " + jdbcUrl);
+            System.out.println("JDBC: " + jdbcUrl);
 
             try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
                  Statement stmt = conn.createStatement();
@@ -44,7 +44,7 @@ public class Application implements AppShellConfigurator {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("❌ Verbindung fehlgeschlagen.");
+            System.out.println("Verbindung fehlgeschlagen.");
         }
 
         SpringApplication.run(Application.class, args);
