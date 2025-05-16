@@ -26,16 +26,13 @@ public class Application implements AppShellConfigurator {
     public static void main(String[] args) {
 
         try {
-            String jdbcUrl = String.format(
-                    "jdbc:postgresql:///postgres?cloudSqlInstance=%s&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=%s&password=%s",
-                    "foodorderbuddy:europe-west1:foodorderbuddy-db",
-                    "postgres",
-                    "foodorderbuddy123"
-            );
+            String jdbcUrl = "jdbc:postgresql://35.205.245.25:5432/postgres";
+            String username = "postgres";
+            String password = "foodorderbuddy123";
 
             System.out.println("🔌 JDBC: " + jdbcUrl);
 
-            try (Connection conn = DriverManager.getConnection(jdbcUrl);
+            try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
                  Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery("SELECT 1")) {
 
