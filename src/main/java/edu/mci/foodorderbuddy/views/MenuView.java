@@ -35,6 +35,8 @@ public class MenuView extends VerticalLayout {
         add(getToolbar(), getContent());
         updateList();
         closeEditor();
+
+
     }
 
     private void configureGrids() {
