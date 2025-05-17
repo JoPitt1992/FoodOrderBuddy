@@ -62,18 +62,34 @@ jobs:
           name: Push Docker Image
           command: docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
+
       - run:
-          name: Deploy to Cloud Run
+          name: Deploy to VM
           command: |
-            gcloud run deploy foodorderbuddy \
-              --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
-              --add-cloudsql-instances "foodorderbuddy:europe-west1:foodorderbuddy-db" \
-              --set-env-vars CLOUD_SQL_CONNECTION_NAME="foodorderbuddy:europe-west1:foodorderbuddy-db" \
-              --region=europe-west1 \
-              --platform=managed \
-              --allow-unauthenticated \
-              --timeout=600s \
-              --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
+            echo "$SSH_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh -o StrictHostKeyChecking=no benjamin_mader@10.128.0.2 << 'EOF'
+              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+              docker stop foodorderbuddy-app || true
+              docker rm foodorderbuddy-app || true
+              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+            EOF
+            
+            
+            
+
+      #- run:
+      #    name: Deploy to Cloud Run
+      #    command: |
+      #      gcloud run deploy foodorderbuddy \
+      #        --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
+      #        --add-cloudsql-instances "foodorderbuddy:europe-west1:foodorderbuddy-db" \
+      #        --set-env-vars CLOUD_SQL_CONNECTION_NAME="foodorderbuddy:europe-west1:foodorderbuddy-db" \
+      #        --region=europe-west1 \
+      #        --platform=managed \
+      #        --allow-unauthenticated \
+      #        --timeout=600s \
+      #        --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
 
 workflows:
   version: 2
