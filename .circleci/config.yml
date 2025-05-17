@@ -68,7 +68,7 @@ jobs:
           command: |
             echo "$SSH_KEY" > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
-            ssh -o StrictHostKeyChecking=no benjamin_mader@10.128.0.2 \<< 'EOF'
+            ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< 'EOF'
               docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
               docker stop foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
