@@ -29,4 +29,5 @@ public class OrderHistory {
 
     public void setPerson(Person person) {this.person = person; }
     public void setCarts(List<Cart> carts) {this.carts = carts;}
+    public void addCart(Cart cart) {carts.add(cart); cart.setOrderHistory(this); }
 }

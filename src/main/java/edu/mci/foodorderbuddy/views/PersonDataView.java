@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -16,7 +17,7 @@ import edu.mci.foodorderbuddy.service.PersonService;
 import jakarta.annotation.security.PermitAll;
 
 @PermitAll
-@Route(value = "userprofile", layout = MainLayout.class)
+@Route(value = "userdata", layout = MainLayout.class)
 @PageTitle("My Profile | Food Order Buddy")
 public class PersonDataView extends VerticalLayout {
 
@@ -35,7 +36,11 @@ public class PersonDataView extends VerticalLayout {
 
     public PersonDataView(PersonService personService) {
         this.personService = personService;
+        H2 header = new H2("Benutzerdaten bearbeiten");
+        header.getStyle().set("text-align", "center");
+        header.setWidthFull();
 
+        add(header);
         add(createFormLayout());
         add(createSaveButton());
 
@@ -45,6 +50,13 @@ public class PersonDataView extends VerticalLayout {
         //binder.setBean(currentUser);
 
         save.addClickListener(event -> saveProfileChanges());
+    }
+
+    private Component header(){
+        H2 header = new H2("Benutzerdaten bearbeiten");
+        header.getStyle().set("text-align", "center");
+        header.setWidthFull();
+        return header;
     }
 
     // Darstellung der Felder in 2 Spalten

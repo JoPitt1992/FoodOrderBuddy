@@ -37,6 +37,9 @@ public class Cart {
 
     @Column(name = "cart_delivered")
     private Boolean cartDelivered;
+
+    @ManyToOne
+    private Person owner;
 /*
     @OneToOne(mappedBy = "cart", cascade = CascadeType.ALL)
     private CartCookie cartCookie;
@@ -45,7 +48,7 @@ public class Cart {
 
     public Long getCartId() {return cartId; }
     public List<Menu> getCartList() {return cartList; }
-    public OrderHistory getOrderhistory() {return orderhistory; }
+    public OrderHistory getOrderHistory() {return orderhistory; }
     public Double getCartPrice() {return cartPrice; }
     public Boolean getCartPayed() {return cartPayed; }
     public Date getCartPaydate() {return cartPaydate; }
@@ -53,7 +56,7 @@ public class Cart {
     //public CartCookie getCartCookie() {return cartCookie; }
 
     public void setCartList(List<Menu> cartList) {this.cartList = cartList; }
-    public void setOrderhistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
+    public void setOrderHistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
     public void setCartPrice(Double cartPrice) {this.cartPrice = cartPrice; }
     public void setCartPayed(Boolean cartPayed) {this.cartPayed = cartPayed; }
     public void setCartPaydate(Date cartPaydate) {this.cartPaydate = cartPaydate; }

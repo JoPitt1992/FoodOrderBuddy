@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
+import org.hibernate.query.Order;
 
 @Entity
 @Table(name = "person")
@@ -76,6 +77,7 @@ public class Person {
     }
     public String getPersonPhonenumber() {return personPhonenumber;}
     public String getRole() {return role;}
+    public OrderHistory getOrderhistory() {return orderhistory;}
 
     public void setPersonFirstName(String firstName) {
         this.personFirstName = firstName;
@@ -94,6 +96,7 @@ public class Person {
     }
     public void setPersonPhonenumber(String phonenumber) {this.personPhonenumber = phonenumber; }
     public void setRole(String role) {this.role = role; }
+    public void setOrderhistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
 
     @Override
     public String toString() {

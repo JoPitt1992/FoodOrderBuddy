@@ -55,7 +55,8 @@ public class MenuView extends VerticalLayout {
         menuGrid.addClassNames("menu-grid");
         menuGrid.setSizeFull();
 
-        menuGrid.setColumns("menuTitle", "menuIngredients", "menuPrice");
+        menuGrid.setColumns("menuId", "menuTitle", "menuIngredients", "menuPrice");
+        menuGrid.getColumnByKey("menuId").setHeader("Nr.");
         menuGrid.getColumnByKey("menuTitle").setHeader("Menübezeichnung");
         menuGrid.getColumnByKey("menuIngredients").setHeader("Zutaten");
         menuGrid.getColumnByKey("menuPrice")
@@ -83,7 +84,7 @@ public class MenuView extends VerticalLayout {
     }
 
     private HorizontalLayout getToolbar() {
-        filterText.setPlaceholder("Finde dein Lieblingsmenü... ");
+        filterText.setPlaceholder("Suche in der Speisekarte... ");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(e -> updateList());

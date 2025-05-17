@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MenuRepository extends JpaRepository<Menu, Long> {
@@ -15,4 +16,5 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
             "or lower(m.menuIngredients) like lower(concat('%', :searchTerm, '%'))")
     List<Menu> search(@Param("searchTerm") String searchTerm);
     List<Menu> findByMenuDailyTrue();
+    Optional<Menu> findByMenuTitle(String menuTitle);
 }
