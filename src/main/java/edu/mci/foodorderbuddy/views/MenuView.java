@@ -81,13 +81,13 @@ public class MenuView extends VerticalLayout {
 
 
     private HorizontalLayout getToolbar() {
-        filterText.setPlaceholder("Finde dein Lieblingsmenü...");
+        filterText.setPlaceholder("Finde dein Lieblingsmenü... unter den besten Menüs");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(e -> updateList());
         filterText.setWidth("300px");
 
-        Button addMenubutton = new Button("Menü hinzufügen"); // nur für Admin
+        Button addMenubutton = new Button("Menü hinzufügen Button"); // nur für Admin
         addMenubutton.addClickListener(click -> addMenu());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addMenubutton);
