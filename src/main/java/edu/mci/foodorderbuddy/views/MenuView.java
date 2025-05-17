@@ -1,6 +1,7 @@
 package edu.mci.foodorderbuddy.views;
 
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import edu.mci.foodorderbuddy.data.entity.Menu;
@@ -13,12 +14,12 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
-//@PermitAll
 @RolesAllowed({"ROLE_USER", "ROLE_ADMIN"})
-@Route(value="menu", layout = MainLayout.class)
+@Route(value = "menu", layout = MainLayout.class)
 @PageTitle("Speisekarte | Food Order Buddy")
 public class MenuView extends VerticalLayout {
     Grid<Menu> menuGrid = new Grid<>(Menu.class);
@@ -37,8 +38,6 @@ public class MenuView extends VerticalLayout {
         add(getToolbar(), getContent());
         updateList();
         closeEditor();
-
-
     }
 
     private void configureGrids() {
@@ -57,9 +56,10 @@ public class MenuView extends VerticalLayout {
         menuGrid.setSizeFull();
 
         menuGrid.setColumns("menuTitle", "menuIngredients", "menuPrice");
-
+        menuGrid.getColumnByKey("menuTitle").setHeader("Menübezeichnung");
+        menuGrid.getColumnByKey("menuIngredients").setHeader("Zutaten");
         menuGrid.getColumnByKey("menuPrice")
-                .setHeader("Price")
+                .setHeader("Preis")
                 .setTextAlign(ColumnTextAlign.CENTER)
                 .setRenderer(new ComponentRenderer<>(menu -> {
                     if (menu != null && menu.getMenuPrice() != null) {
@@ -67,6 +67,7 @@ public class MenuView extends VerticalLayout {
                     }
                     return new Text("-");
                 }));
+
 
         menuGrid.getColumns().forEach(col -> col.setAutoWidth(true));
         menuGrid.asSingleSelect().addValueChangeListener(event -> editMenu(event.getValue()));
@@ -81,19 +82,27 @@ public class MenuView extends VerticalLayout {
         return content;
     }
 
-
     private HorizontalLayout getToolbar() {
-        filterText.setPlaceholder("Finde dein Lieblingsmenü... unter den besten Menüs");
+        filterText.setPlaceholder("Finde dein Lieblingsmenü... ");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(e -> updateList());
-        filterText.setWidth("300px");
+        filterText.setWidth("500px");
 
-        Button addMenubutton = new Button("Menü hinzufügen Button"); // nur für Admin
-        addMenubutton.addClickListener(click -> addMenu());
-
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, addMenubutton);
+        HorizontalLayout toolbar = new HorizontalLayout(filterText);
         toolbar.addClassName("toolbar");
+        toolbar.setWidthFull();
+        toolbar.setAlignItems(Alignment.CENTER);
+
+        if (isUserInRole("ROLE_ADMIN")) {
+            Button addMenubutton = new Button("Menü hinzufügen");
+            addMenubutton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            addMenubutton.addClickListener(click -> addMenu());
+            toolbar.add(new com.vaadin.flow.component.HtmlComponent("div"));
+            toolbar.setFlexGrow(1, toolbar.getComponentAt(1));
+            toolbar.add(addMenubutton);
+        }
+
         return toolbar;
     }
 
@@ -132,5 +141,11 @@ public class MenuView extends VerticalLayout {
 
     private void updateList() {
         menuGrid.setItems(service.findAllMenus(filterText.getValue()));
+    }
+
+    private boolean isUserInRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(role));
     }
 }
