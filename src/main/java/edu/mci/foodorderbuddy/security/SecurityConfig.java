@@ -38,6 +38,7 @@ public class SecurityConfig extends VaadinWebSecurity {
                 formLogin
                         .loginPage("/login")
                         .defaultSuccessUrl("/menu", true)
+                        .permitAll()
         );
 
         super.configure(http);

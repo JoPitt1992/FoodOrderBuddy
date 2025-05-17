@@ -14,8 +14,10 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 
-@PermitAll
+//@PermitAll
+@RolesAllowed({"ROLE_USER", "ROLE_ADMIN"})
 @Route(value="menu", layout = MainLayout.class)
 @PageTitle("Speisekarte | Food Order Buddy")
 public class MenuView extends VerticalLayout {
