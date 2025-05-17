@@ -34,7 +34,7 @@ WORKDIR /home/myuser/app
 COPY --from=build /home/myuser/app/target/*-SNAPSHOT.jar app.jar
 
 # ENV: Setze deine Instanzverbindung
-ENV CLOUD_SQL_INSTANCE=foodorderbuddy:europe-west1:foodorderbuddy-sql
+ENV CLOUD_SQL_INSTANCE=foodorderbuddy:europe-west1:foodorderbuddy-db
 
 # Port freigeben
 EXPOSE 8080
