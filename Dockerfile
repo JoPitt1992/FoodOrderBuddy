@@ -16,6 +16,7 @@ RUN mvn clean package -B -DskipTests -Pproduction
 # ----------- Runtime Stage ----------- #
 FROM eclipse-temurin:21-jre
 
+RUN useradd -m myuser
 USER myuser
 WORKDIR /home/myuser/app
 
