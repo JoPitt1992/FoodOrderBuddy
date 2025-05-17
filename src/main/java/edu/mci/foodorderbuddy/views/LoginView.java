@@ -13,7 +13,7 @@ import edu.mci.foodorderbuddy.data.test.DbInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("login")
-@PageTitle("Login | FoodOrder Buddy")
+@PageTitle("Login | FoodOrder Buddy - Now on VM")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
