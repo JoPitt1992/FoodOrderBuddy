@@ -67,17 +67,16 @@ jobs:
           name: Deploy to VM
           command: |
             mkdir -p ~/.ssh
-            echo "$SSH_KEY" > ~/.ssh/id_rsa
+            echo "$SSH_KEY" | base64 -d > ~/.ssh/id_rsa
+            # echo "$SSH_KEY" > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
             
-            echo "Key file contents:"
-            cat ~/.ssh/id_rsa
             echo "File type:"
             file ~/.ssh/id_rsa
             echo "Permissions:"
             ls -la ~/.ssh/id_rsa
       
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa benjamin_mader@34.55.206.229 << 'EOF'
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa benjamin_mader@34.55.206.229 \<< 'EOF'
               docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
               docker stop foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
