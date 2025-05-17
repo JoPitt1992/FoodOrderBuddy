@@ -30,7 +30,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         login.setAction("login");
 
-        add(new H1("Food-Order-Buddy"), login);
+        add(new H1("Food-Order-Buddy - Now On VM"), login);
 
         DbInitializer dbInitializer = new DbInitializer(personRepository);
         this.personRepository = personRepository;
