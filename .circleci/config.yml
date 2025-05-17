@@ -1,6 +1,5 @@
 version: 2.1
 
-
 executors:
   docker-executor:
     docker:
@@ -20,39 +19,23 @@ jobs:
 
 
       - run:
-          name: Build Docker Image
-          command: docker build -t foodorderbuddy-app .
-
-      - run:
-          name: Tag Docker Image
-          command: >
-            docker tag foodorderbuddy-app
-            europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+          name: Build Docker Image mit korrektem Tag
+          command: docker build -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest .
 
       - persist_to_workspace:
           root: .
           paths:
             - .
-      - run:
-          name: Save Docker Image
-          command: docker save europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest | gzip > image.tar.gz
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - image.tar.gz
-
 
   deploy:
     executor: docker-executor
     steps:
       - setup_remote_docker:
-            docker_layer_caching: true
+          docker_layer_caching: true
+
       - attach_workspace:
           at: .
-      - run:
-          name: Load Docker Image
-          command: gunzip -c image.tar.gz | docker load
+
       - run:
           name: Decode GCP Service Account Key
           command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
@@ -87,16 +70,8 @@ jobs:
               --region=europe-west1 \
               --platform=managed \
               --allow-unauthenticated \
+              --timeout=600s \
               --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
-            
-            # For Google Cloud SQL
-            #gcloud run deploy foodorderbuddy \
-            #  --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
-            #  --region=europe-west1 \
-            #  --platform=managed \
-            #  --allow-unauthenticated \
-            #  --add-cloudsql-instances=foodorderbuddy:europe-west1:foodorderbuddy-db \
-            #  --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
 
 workflows:
   version: 2
