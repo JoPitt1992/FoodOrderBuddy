@@ -16,6 +16,10 @@ jobs:
           docker_layer_caching: true
 
       - run:
+          name: Speichere Commit Hash für Deploy-Job
+          command: echo "${CIRCLE_SHA1}" > commit-sha.txt
+
+      - run:
           name: Git Info
           command: |
             git log -1
@@ -58,11 +62,41 @@ jobs:
             docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
             docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
+      - persist_to_workspace:
+          root: .
+          paths:
+            - commit-sha.txt
+
   deploy:
     executor: docker-executor
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Lade Commit Hash aus Datei
+          command: |
+            export IMAGE_TAG=$(cat commit-sha.txt)
+            echo "export IMAGE_TAG=${IMAGE_TAG}" >> $BASH_ENV
+            source $BASH_ENV
+
+      - run:
+          name: Decode GCP Service Account Key
+          command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
+
+      - run:
+          name: Install Google Cloud SDK
+          command: |
+            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+              gpg --dearmor | \
+              sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+              sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk    
 
       - run:
           name: Decode GCP Service Account Key
@@ -79,10 +113,10 @@ jobs:
           name: Deploy to VM mit Commit-Tag
           command: |
             ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< EOF
-              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
+              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
               docker kill foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
-              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
+              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
             EOF
 
 
