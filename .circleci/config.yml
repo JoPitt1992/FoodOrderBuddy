@@ -26,7 +26,7 @@ jobs:
 
       - run:
           name: Zeige Inhalte des target-Ordners
-          command: ls -lh /home/myuser/app/target/
+          command: ls -lh target/
 
       - run:
           name: Build Docker Image mit korrektem Tag
