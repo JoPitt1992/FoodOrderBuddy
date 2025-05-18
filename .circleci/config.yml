@@ -31,7 +31,6 @@ jobs:
       - run:
           name: Build Docker Image mit Commit-Tag und latest
           command: |
-            source $BASH_ENV
             docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} .
             docker tag europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
@@ -74,15 +73,14 @@ jobs:
       - run:
           name: Push Docker Image mit Commit-Tag und latest
           command: |
-            source $BASH_ENV
             docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
             docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
             gcloud artifacts docker images list europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app --include-tags
+      
 
       - run:
           name: Deploy to VM mit Commit-Tag
           command: |
-            source $BASH_ENV
             ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< EOF
               docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
               docker kill foodorderbuddy-app || true
