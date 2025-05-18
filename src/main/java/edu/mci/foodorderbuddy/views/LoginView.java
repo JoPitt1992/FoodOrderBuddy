@@ -1,6 +1,6 @@
 package edu.mci.foodorderbuddy.views;
 
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.html.Anchor;
@@ -32,17 +32,16 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.setAction("login");
         Anchor registryLink = new Anchor("registry", "Neu registrieren");
 
-        add(new H1("Food-Order-Buddy -- Test"),
+        add(new H2("Food-Order-Buddy"),
                 login,
                 registryLink);
 
-        DbInitializer dbInitializer = new DbInitializer(personRepository);
+        // DbInitializer dbInitializer = new DbInitializer(personRepository);
         this.personRepository = personRepository;
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
-        // inform the user about an authentication error
         if(beforeEnterEvent
                 .getLocation()
                 .getQueryParameters()

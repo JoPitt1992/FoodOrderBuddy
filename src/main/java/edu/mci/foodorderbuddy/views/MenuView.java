@@ -7,6 +7,7 @@ import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -26,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -94,15 +96,30 @@ public class MenuView extends VerticalLayout {
         grid.addClassName("menu-grid");
         grid.setHeight("300px");
 
-        grid.addColumn(Menu::getMenuId).setHeader("Nr.").setAutoWidth(true);
-        grid.addColumn(Menu::getMenuTitle).setHeader("Menübezeichnung").setAutoWidth(true);
-        grid.addColumn(Menu::getMenuIngredients).setHeader("Zutaten").setAutoWidth(true);
+        grid.addColumn(Menu::getMenuId)
+                .setHeader("Nr.")
+                .setSortable(true)
+                .setAutoWidth(true);
+
+        grid.addColumn(Menu::getMenuTitle)
+                .setHeader("Menübezeichnung")
+                .setAutoWidth(true);
+
+        grid.addColumn(Menu::getMenuIngredients)
+                .setHeader("Zutaten")
+                .setAutoWidth(true);
+
         grid.addColumn(new ComponentRenderer<>(menu -> {
-            if (menu != null && menu.getMenuPrice() != null) {
-                return new Text(String.format("%.2f €", menu.getMenuPrice()));
-            }
-            return new Text("-");
-        })).setHeader("Preis").setTextAlign(ColumnTextAlign.CENTER).setAutoWidth(true);
+                    if (menu != null && menu.getMenuPrice() != null) {
+                        return new Text(String.format("%.2f €", menu.getMenuPrice()));
+                    }
+                    return new Text("-");
+                }))
+                .setHeader("Preis")
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setAutoWidth(true)
+                .setSortable(true)
+                .setComparator(Comparator.comparing(Menu::getMenuPrice, Comparator.nullsLast(Comparator.naturalOrder())));
 
         grid.asSingleSelect().addValueChangeListener(event -> editMenu(event.getValue()));
     }
@@ -137,7 +154,7 @@ public class MenuView extends VerticalLayout {
         section.setPadding(false);
         section.setSpacing(false);
 
-        H2 heading = new H2(title);
+        H3 heading = new H3(title);
         heading.getStyle().set("margin-top", "12px");
         heading.getStyle().set("margin-bottom", "12px");
 
