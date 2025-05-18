@@ -27,7 +27,7 @@ jobs:
 
       - run:
           name: Build Docker Image mit korrektem Tag
-          command: docker build -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest .
+          command: docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest .
 
       - persist_to_workspace:
           root: .
