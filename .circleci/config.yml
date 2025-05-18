@@ -29,24 +29,25 @@ jobs:
           command: ls -lh target/
 
       - run:
-          name: Build Docker Image mit Commit-Tag und latest
+          name: Authenticate with Google Cloud
+          command: |
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud config set project foodorderbuddy
+            gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - run:
+          name: Build und Push Docker Image mit Commit-Tag und latest
           command: |
             docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} .
             docker tag europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
+            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
+            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
   deploy:
     executor: docker-executor
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-
-      - attach_workspace:
-          at: .
 
       - run:
           name: Decode GCP Service Account Key
@@ -69,14 +70,6 @@ jobs:
             gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
             gcloud config set project foodorderbuddy
             gcloud auth configure-docker europe-west1-docker.pkg.dev
-
-      - run:
-          name: Push Docker Image mit Commit-Tag und latest
-          command: |
-            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
-            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
-            gcloud artifacts docker images list europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app --include-tags
-      
 
       - run:
           name: Deploy to VM mit Commit-Tag
