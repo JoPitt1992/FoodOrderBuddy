@@ -20,7 +20,7 @@ FROM eclipse-temurin:21-jre
 #USER myuser
 WORKDIR /home/myuser/app
 
-COPY --from=build /home/myuser/app/target/*-SNAPSHOT.jar app.jar
+COPY --from=build /home/myuser/app/target/flowcrmtutorial-1.0-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
