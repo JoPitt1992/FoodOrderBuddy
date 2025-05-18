@@ -21,12 +21,6 @@ jobs:
             git log -1
 
       - run:
-          name: Set IMAGE_TAG env
-          command: |
-            echo "export IMAGE_TAG=${CIRCLE_SHA1}" >> $BASH_ENV
-            source $BASH_ENV
-
-      - run:
           name: Build JAR (Production)
           command: mvn clean package -DskipTests -Pproduction -Dvaadin.offlineKey="eyJraWQiOiI1NDI3NjRlNzAwMDkwOGU2NWRjM2ZjMWRhYmY0ZTJjZDI4OTY2NzU4IiwidHlwIjoiSldUIiwiYWxnIjoiRVM1MTIifQ.eyJhbGxvd2VkUHJvZHVjdHMiOlsidmFhZGluLWNoYXJ0cyIsInZhYWRpbi10ZXN0YmVuY2giLCJ2YWFkaW4tZGVzaWduZXIiLCJ2YWFkaW4tY2hhcnQiLCJ2YWFkaW4tYm9hcmQiLCJ2YWFkaW4tY29uZmlybS1kaWFsb2ciLCJ2YWFkaW4tY29va2llLWNvbnNlbnQiLCJ2YWFkaW4tcmljaC10ZXh0LWVkaXRvciIsInZhYWRpbi1ncmlkLXBybyIsInZhYWRpbi1tYXAiLCJ2YWFkaW4tc3ByZWFkc2hlZXQtZmxvdyIsInZhYWRpbi1jcnVkIiwidmFhZGluLWNvcGlsb3QiLCJ2YWFkaW4tZGFzaGJvYXJkIl0sInN1YiI6Ijg1ZWJhMzBiLWQ4ZjgtNDBmMC05OTE0LTYyODU3MjAyNGM5OSIsInZlciI6MSwiaXNzIjoiVmFhZGluIiwiYWxsb3dlZEZlYXR1cmVzIjpbImNlcnRpZmljYXRpb25zIiwic3ByZWFkc2hlZXQiLCJ0ZXN0YmVuY2giLCJkZXNpZ25lciIsImNoYXJ0cyIsImJvYXJkIiwiYXBwc3RhcnRlciIsInZpZGVvdHJhaW5pbmciLCJwcm8tcHJvZHVjdHMtMjAyMjEwIl0sIm1hY2hpbmVfaWQiOiJtaWQtNDhhZDNjZTMtMjY2ZDg1MTMiLCJzdWJzY3JpcHRpb24iOiJWYWFkaW4gUHJvIiwic3Vic2NyaXB0aW9uS2V5IjpudWxsLCJuYW1lIjoiSm9oYW5uZXMgUGl0dGVybGUiLCJidWlsZF90eXBlcyI6WyJkZXZlbG9wbWVudCIsInByb2R1Y3Rpb24iXSwiZXhwIjoxNzUwNDY0MDAwLCJpYXQiOjE3NDYzNDQ2MjMsImFjY291bnQiOiJNYW5hZ2VtZW50IENlbnRlciBJbm5zYnJ1Y2sifQ.ABv_OxA25Cdmr8tAmIXkJbcbxSHW0FYD3DvsGxJq0MN02-A_RhQYkGCJsjtOIrvSXonNx-nBcOTdQxy5heO7-KKhASlvHEpFfWFNSwz_UI7U5PRREssqu9raJTCLfMAGaRpkoPrnM0NAATuWZLUitsuk8a9k4wuL100B-v0FFyFhIipm"
 
@@ -38,8 +32,8 @@ jobs:
           name: Build Docker Image mit Commit-Tag und latest
           command: |
             source $BASH_ENV
-            docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG} .
-            docker tag europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG} europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+            docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} .
+            docker tag europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
       - persist_to_workspace:
           root: .
@@ -81,7 +75,7 @@ jobs:
           name: Push Docker Image mit Commit-Tag und latest
           command: |
             source $BASH_ENV
-            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
+            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
             docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
             gcloud artifacts docker images list europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app --include-tags
 
@@ -90,10 +84,10 @@ jobs:
           command: |
             source $BASH_ENV
             ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< EOF
-              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
+              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
               docker kill foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
-              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
+              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
             EOF
 
 workflows:
