@@ -22,7 +22,7 @@ public class DashboardView extends VerticalLayout {
     }
 
     private Component exampleMethod() {
-        Span message = new Span("DashboardView-Site under construction");
+        Span message = new Span("DashboardView-Site under construction, but sooooooon it will come ;)");
         message.addClassNames("text-xl", "mt-m");
         return message;
     }
