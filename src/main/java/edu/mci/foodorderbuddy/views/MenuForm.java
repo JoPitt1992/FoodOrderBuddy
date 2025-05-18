@@ -58,7 +58,7 @@ public class MenuForm extends FormLayout {
 
             save.setVisible(true);
             delete.setVisible(true);
-            addToCart.setVisible(false);
+            addToCart.setVisible(true);
         } else {
             // für User nur Read-Only Textfelder
             menuTitle.setReadOnly(true);
