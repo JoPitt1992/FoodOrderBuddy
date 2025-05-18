@@ -32,7 +32,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         login.setAction("login");
         Anchor registryLink = new Anchor("registry", "Neu registrieren");
 
-        add(new H1("Food-Order-Buddy"),
+        add(new H1("Food-Order-Buddy -- Test"),
                 login,
                 registryLink);
 

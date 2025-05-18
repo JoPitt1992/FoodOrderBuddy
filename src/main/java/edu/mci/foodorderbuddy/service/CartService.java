@@ -48,7 +48,7 @@ public class CartService {
                 person.setPersonFirstName("Temporärer");
                 person.setPersonLastName("Benutzer");
                 person.setPersonEmail(username + "@example.com"); // Wichtig: E-Mail setzen
-                person.setRole("ROLE_USER"); // Rolle setzen
+                person.setPersonRole("ROLE_USER"); // Rolle setzen
 
                 // Benutzer in der Datenbank speichern
                 person = personRepository.save(person);
