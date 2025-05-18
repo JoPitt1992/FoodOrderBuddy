@@ -96,8 +96,6 @@ jobs:
               docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
             EOF
 
-
-
 workflows:
   version: 2
   build-and-deploy:
