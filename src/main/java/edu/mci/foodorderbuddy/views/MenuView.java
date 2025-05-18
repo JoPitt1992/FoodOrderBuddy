@@ -1,22 +1,29 @@
 package edu.mci.foodorderbuddy.views;
 
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
-import edu.mci.foodorderbuddy.data.entity.Menu;
-import edu.mci.foodorderbuddy.service.MenuService;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.Menu;
+import edu.mci.foodorderbuddy.security.SecurityService;
+import edu.mci.foodorderbuddy.service.CartService;
+import edu.mci.foodorderbuddy.service.MenuService;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @RolesAllowed({"ROLE_USER", "ROLE_ADMIN"})
 @Route(value = "menu", layout = MainLayout.class)
@@ -25,10 +32,15 @@ public class MenuView extends VerticalLayout {
     Grid<Menu> menuGrid = new Grid<>(Menu.class);
     TextField filterText = new TextField();
     MenuForm form;
-    MenuService service;
+    private final MenuService menuService;
+    private final CartService cartService;
+    private final SecurityService securityService;
 
-    public MenuView(MenuService service) {
-        this.service = service;
+    public MenuView(MenuService menuService, CartService cartService, SecurityService securityService) {
+        this.menuService = menuService;
+        this.cartService = cartService;
+        this.securityService = securityService;
+
         addClassName("list-view");
         setSizeFull();
         configureGrids();
@@ -49,6 +61,7 @@ public class MenuView extends VerticalLayout {
         form.addListener(MenuForm.SaveEvent.class, this::saveMenu);
         form.addListener(MenuForm.DeleteEvent.class, this::deleteMenu);
         form.addListener(MenuForm.CloseEvent.class, e -> closeEditor());
+        form.addListener(MenuForm.AddToCartEvent.class, this::addToCart);
     }
 
     private void configureMenuGrid() {
@@ -99,8 +112,11 @@ public class MenuView extends VerticalLayout {
             Button addMenubutton = new Button("Menü hinzufügen");
             addMenubutton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             addMenubutton.addClickListener(click -> addMenu());
-            toolbar.add(new com.vaadin.flow.component.HtmlComponent("div"));
-            toolbar.setFlexGrow(1, toolbar.getComponentAt(1));
+
+            // Spacer hinzufügen, um den Button rechts auszurichten
+            Div spacer = new Div();
+            toolbar.add(spacer);
+            toolbar.setFlexGrow(1, spacer);
             toolbar.add(addMenubutton);
         }
 
@@ -118,14 +134,36 @@ public class MenuView extends VerticalLayout {
     }
 
     private void saveMenu(MenuForm.SaveEvent event) {
-        service.saveMenu(event.getMenu());
+        menuService.saveMenu(event.getMenu());
         updateList();
         closeEditor();
     }
 
     private void deleteMenu(MenuForm.DeleteEvent event) {
-        service.deleteMenu(event.getMenu());
+        menuService.deleteMenu(event.getMenu());
         updateList();
+        closeEditor();
+    }
+
+    private void addToCart(MenuForm.AddToCartEvent event) {
+        Menu menu = event.getMenu();
+        UserDetails user = securityService.getAuthenticatedUser();
+
+        if (user != null) {
+            Cart cart = cartService.getOrCreateCart(user.getUsername());
+
+            if (cart != null) {
+                cartService.addMenuToCart(cart, menu);
+
+                Notification notification = new Notification(
+                        "Menü zum Warenkorb hinzugefügt",
+                        3000,
+                        Notification.Position.MIDDLE);
+                notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                notification.open();
+            }
+        }
+
         closeEditor();
     }
 
@@ -141,7 +179,7 @@ public class MenuView extends VerticalLayout {
     }
 
     private void updateList() {
-        menuGrid.setItems(service.findAllMenus(filterText.getValue()));
+        menuGrid.setItems(menuService.findAllMenus(filterText.getValue()));
     }
 
     private boolean isUserInRole(String role) {

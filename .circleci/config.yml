@@ -1,11 +1,13 @@
 version: 2.1
 
+
 executors:
   docker-executor:
     docker:
       - image: cimg/openjdk:21.0
 
 jobs:
+
   build:
     executor: docker-executor
     steps:
@@ -14,18 +16,56 @@ jobs:
           docker_layer_caching: true
 
       - run:
+          name: Speichere Commit Hash für Deploy-Job
+          command: echo "${CIRCLE_SHA1}" > commit-sha.txt
+
+      - run:
+          name: Git Info
+          command: |
+            git log -1
+
+      - run:
           name: Build JAR (Production)
           command: mvn clean package -DskipTests -Pproduction -Dvaadin.offlineKey="eyJraWQiOiI1NDI3NjRlNzAwMDkwOGU2NWRjM2ZjMWRhYmY0ZTJjZDI4OTY2NzU4IiwidHlwIjoiSldUIiwiYWxnIjoiRVM1MTIifQ.eyJhbGxvd2VkUHJvZHVjdHMiOlsidmFhZGluLWNoYXJ0cyIsInZhYWRpbi10ZXN0YmVuY2giLCJ2YWFkaW4tZGVzaWduZXIiLCJ2YWFkaW4tY2hhcnQiLCJ2YWFkaW4tYm9hcmQiLCJ2YWFkaW4tY29uZmlybS1kaWFsb2ciLCJ2YWFkaW4tY29va2llLWNvbnNlbnQiLCJ2YWFkaW4tcmljaC10ZXh0LWVkaXRvciIsInZhYWRpbi1ncmlkLXBybyIsInZhYWRpbi1tYXAiLCJ2YWFkaW4tc3ByZWFkc2hlZXQtZmxvdyIsInZhYWRpbi1jcnVkIiwidmFhZGluLWNvcGlsb3QiLCJ2YWFkaW4tZGFzaGJvYXJkIl0sInN1YiI6Ijg1ZWJhMzBiLWQ4ZjgtNDBmMC05OTE0LTYyODU3MjAyNGM5OSIsInZlciI6MSwiaXNzIjoiVmFhZGluIiwiYWxsb3dlZEZlYXR1cmVzIjpbImNlcnRpZmljYXRpb25zIiwic3ByZWFkc2hlZXQiLCJ0ZXN0YmVuY2giLCJkZXNpZ25lciIsImNoYXJ0cyIsImJvYXJkIiwiYXBwc3RhcnRlciIsInZpZGVvdHJhaW5pbmciLCJwcm8tcHJvZHVjdHMtMjAyMjEwIl0sIm1hY2hpbmVfaWQiOiJtaWQtNDhhZDNjZTMtMjY2ZDg1MTMiLCJzdWJzY3JpcHRpb24iOiJWYWFkaW4gUHJvIiwic3Vic2NyaXB0aW9uS2V5IjpudWxsLCJuYW1lIjoiSm9oYW5uZXMgUGl0dGVybGUiLCJidWlsZF90eXBlcyI6WyJkZXZlbG9wbWVudCIsInByb2R1Y3Rpb24iXSwiZXhwIjoxNzUwNDY0MDAwLCJpYXQiOjE3NDYzNDQ2MjMsImFjY291bnQiOiJNYW5hZ2VtZW50IENlbnRlciBJbm5zYnJ1Y2sifQ.ABv_OxA25Cdmr8tAmIXkJbcbxSHW0FYD3DvsGxJq0MN02-A_RhQYkGCJsjtOIrvSXonNx-nBcOTdQxy5heO7-KKhASlvHEpFfWFNSwz_UI7U5PRREssqu9raJTCLfMAGaRpkoPrnM0NAATuWZLUitsuk8a9k4wuL100B-v0FFyFhIipm"
 
+      - run:
+          name: Zeige Inhalte des target-Ordners
+          command: ls -lh target/
 
       - run:
-          name: Build Docker Image mit korrektem Tag
-          command: docker build -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest .
+          name: Install Google Cloud SDK
+          command: |
+            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+              gpg --dearmor | \
+              sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
+              sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk    
+
+      - run:
+          name: Decode GCP Service Account Key
+          command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
+
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+            gcloud config set project foodorderbuddy
+            gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - run:
+          name: Build und Push Docker Image mit Commit-Tag und latest
+          command: |
+            docker build --no-cache -t europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} .
+            docker tag europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1} europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${CIRCLE_SHA1}
+            docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
 
       - persist_to_workspace:
           root: .
           paths:
-            - .
+            - commit-sha.txt
 
   deploy:
     executor: docker-executor
@@ -35,6 +75,13 @@ jobs:
 
       - attach_workspace:
           at: .
+
+      - run:
+          name: Lade Commit Hash aus Datei
+          command: |
+            export IMAGE_TAG=$(cat commit-sha.txt)
+            echo "export IMAGE_TAG=${IMAGE_TAG}" >> $BASH_ENV
+            source $BASH_ENV
 
       - run:
           name: Decode GCP Service Account Key
@@ -49,7 +96,11 @@ jobs:
               sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
               sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-            sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk    
+
+      - run:
+          name: Decode GCP Service Account Key
+          command: echo $GCLOUD_SERVICE_KEY | base64 --decode > ${HOME}/gcloud-service-key.json
 
       - run:
           name: Authenticate with Google Cloud
@@ -59,33 +110,15 @@ jobs:
             gcloud auth configure-docker europe-west1-docker.pkg.dev
 
       - run:
-          name: Push Docker Image
-          command: docker push europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
-
-
-      - run:
-          name: Deploy to VM
+          name: Deploy to VM mit Commit-Tag
           command: |
-            ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< 'EOF'
-              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
-              docker stop foodorderbuddy-app || true
+            ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< EOF
+              docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
+              docker kill foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
-              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
+              docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
             EOF
-        
 
-      #- run:
-      #    name: Deploy to Cloud Run
-      #    command: |
-      #      gcloud run deploy foodorderbuddy \
-      #        --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
-      #        --add-cloudsql-instances "foodorderbuddy:europe-west1:foodorderbuddy-db" \
-      #        --set-env-vars CLOUD_SQL_CONNECTION_NAME="foodorderbuddy:europe-west1:foodorderbuddy-db" \
-      #        --region=europe-west1 \
-      #        --platform=managed \
-      #        --allow-unauthenticated \
-      #        --timeout=600s \
-      #        --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
 
 workflows:
   version: 2
