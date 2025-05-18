@@ -51,12 +51,16 @@ public class MainLayout extends AppLayout {
         RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
         dashboardLink.setHighlightCondition(HighlightConditions.sameLocation());
 
+        RouterLink registryLink = new RouterLink("Registrieren", DashboardView.class);
+        dashboardLink.setHighlightCondition(HighlightConditions.sameLocation());
+
         addToDrawer(new VerticalLayout(
                 menuLink,
                 cartLink,
                 orderHistoryLink,
                 personDataLink,
-                dashboardLink
+                dashboardLink,
+                registryLink
         ));
     }
 }

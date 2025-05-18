@@ -10,7 +10,7 @@ public class DbTest {
     private static String getEnvOrDefault(String key, String defaultValue) {
         String value = System.getenv(key);
         if (value == null || value.isBlank()) {
-            System.out.printf("⚠️  Env %s fehlt – verwende Default: %s%n", key, defaultValue);
+            System.out.printf("Env %s fehlt – verwende Default: %s%n", key, defaultValue);
             return defaultValue;
         }
         return value;
@@ -32,7 +32,7 @@ public class DbTest {
                  ResultSet rs = stmt.executeQuery("SELECT 1")) {
 
                 if (rs.next()) {
-                    System.out.println("✅ Verbindung erfolgreich: " + rs.getInt(1));
+                    System.out.println("Verbindung erfolgreich: " + rs.getInt(1));
                 }
 
                 TestController testcontroller = new TestController();
@@ -42,7 +42,7 @@ public class DbTest {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("❌ Verbindung fehlgeschlagen.");
+            System.out.println("Verbindung fehlgeschlagen.");
         }
     }
 }

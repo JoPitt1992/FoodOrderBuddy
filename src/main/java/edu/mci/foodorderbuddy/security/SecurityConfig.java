@@ -15,7 +15,7 @@ import java.util.Collections;
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig extends VaadinWebSecurity {
-    private static class SimpleInMemoryUserDetailsManager extends InMemoryUserDetailsManager {
+    /*private static class SimpleInMemoryUserDetailsManager extends InMemoryUserDetailsManager {
         public SimpleInMemoryUserDetailsManager() {
             createUser(new User("user",
                     "{noop}userpass",
@@ -26,7 +26,7 @@ public class SecurityConfig extends VaadinWebSecurity {
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
             ));
         }
-    }
+    }*/
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -42,12 +42,6 @@ public class SecurityConfig extends VaadinWebSecurity {
         );
 
         super.configure(http);
-
         setLoginView(http, LoginView.class);
-    }
-
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
-        return new SimpleInMemoryUserDetailsManager();
     }
 }

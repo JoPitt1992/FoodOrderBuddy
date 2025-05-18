@@ -13,7 +13,7 @@ public class TestController {
 
     @GetMapping("/db-test")
     public String test() {
-        repo.save(new Person("Max", "Mustermann", "mmuster", "max@example.com"));
-        return "✅ Verbindung und Save erfolgreich!";
+        repo.save(new Person("Max", "Mustermann", "mmuster", "max@example.com", "letmepass"));
+        return "Verbindung und Save erfolgreich!";
     }
 }

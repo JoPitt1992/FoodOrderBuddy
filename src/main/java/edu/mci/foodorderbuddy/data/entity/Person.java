@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
-import org.hibernate.query.Order;
 
 @Entity
 @Table(name = "person")
@@ -24,6 +23,10 @@ public class Person {
     @Column(name = "person_username", nullable = false)
     @NotEmpty
     private String personUserName = "";
+
+    @Column(name = "person_password", nullable = false)
+    @NotEmpty
+    private String personPassword = "";
 
     @Column(name = "person_address")
     private String personAddress = "";
@@ -52,11 +55,12 @@ public class Person {
     public Person(){}
 
     // Konstruktor mit den Pflichtfeldern beim Registrieren
-    public Person(String personFirstName, String personLastName, String personUserName, String personEmail){
+    public Person(String personFirstName, String personLastName, String personUserName, String personEmail, String personPassword){
         this.personFirstName = personFirstName;
         this.personLastName = personLastName;
         this.personUserName = personUserName;
         this.personEmail = personEmail;
+        this.personPassword = personPassword;
     }
 
     public Long getPersonId() {return personId;}
@@ -69,6 +73,7 @@ public class Person {
     public String getPersonUserName() {
         return personUserName;
     }
+    public String getPersonPassword() {return personPassword; }
     public String getPersonAddress() {return personAddress;}
     public Integer getPersonPostalCode() {return personPostalCode;}
     public String getPersonCity() {return personCity;}
@@ -76,7 +81,7 @@ public class Person {
         return personEmail;
     }
     public String getPersonPhonenumber() {return personPhonenumber;}
-    public String getRole() {return role;}
+    public String getPersonRole() {return role;}
     public OrderHistory getOrderhistory() {return orderhistory;}
 
     public void setPersonFirstName(String firstName) {
@@ -88,6 +93,7 @@ public class Person {
     public void setPersonUserName(String userName) {
         this.personUserName = userName;
     }
+    public void setPersonPassword(String password) {this.personPassword = password; }
     public void setPersonAddress(String address) {this.personAddress = address; }
     public void setPersonPostalCode(Integer postalCode) {this.personPostalCode = postalCode;}
     public void setPersonCity(String city) {this.personCity = city;}
@@ -95,7 +101,7 @@ public class Person {
         this.personEmail = email;
     }
     public void setPersonPhonenumber(String phonenumber) {this.personPhonenumber = phonenumber; }
-    public void setRole(String role) {this.role = role; }
+    public void setPersonRole(String role) {this.role = role; }
     public void setOrderhistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
 
     @Override

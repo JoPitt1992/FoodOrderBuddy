@@ -3,6 +3,7 @@ package edu.mci.foodorderbuddy.views;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -13,7 +14,7 @@ import edu.mci.foodorderbuddy.data.test.DbInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("login")
-@PageTitle("Login | FoodOrder Buddy - Now on VM")
+@PageTitle("Login | FoodOrder Buddy")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -29,8 +30,11 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setJustifyContentMode(JustifyContentMode.CENTER);
 
         login.setAction("login");
+        Anchor registryLink = new Anchor("registry", "Neu registrieren");
 
-        add(new H1("Food-Order-Buddy - Now On VM"), login);
+        add(new H1("Food-Order-Buddy"),
+                login,
+                registryLink);
 
         DbInitializer dbInitializer = new DbInitializer(personRepository);
         this.personRepository = personRepository;
@@ -39,7 +43,8 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         // inform the user about an authentication error
-        if(beforeEnterEvent.getLocation()
+        if(beforeEnterEvent
+                .getLocation()
                 .getQueryParameters()
                 .getParameters()
                 .containsKey("error")) {

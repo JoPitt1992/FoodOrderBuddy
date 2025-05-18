@@ -36,12 +36,13 @@ public class DbInitializer {
         p.setPersonFirstName("Hans");
         p.setPersonLastName("Peter");
         p.setPersonUserName("Pez");
+        p.setPersonPassword("letmepass");
         p.setPersonAddress("Hinterberg 13");
         p.setPersonPostalCode(123);
         p.setPersonCity("Innsbruck");
         p.setPersonEmail("asdfasfd@swd.de");
         p.setPersonPhonenumber("066534234");
-        p.setRole("User");
+        p.setPersonRole("User");
 
         personRepository.save(p);
     }
