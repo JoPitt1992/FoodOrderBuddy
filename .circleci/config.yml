@@ -69,7 +69,7 @@ jobs:
           command: |
             ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< 'EOF'
               docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
-              docker stop foodorderbuddy-app || true
+              docker kill foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
               docker run -d -p 8080:8080 --name foodorderbuddy-app europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest
             EOF
