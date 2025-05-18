@@ -1,14 +1,12 @@
 package edu.mci.foodorderbuddy.data.entity;
 
-
+import com.vaadin.flow.server.VaadinService;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
+import jakarta.servlet.http.HttpServlet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class CartCookie {
 
@@ -20,28 +18,55 @@ public class CartCookie {
 
     private Date expiresAt;
 
-    private Cart cart;
+    // Singleton instance
+    private static CartCookie instance;
 
-    public CartCookie() {}
+    private CartCookie() {}
 
-    public CartCookie(String cookieValue, Date expiresAt, Cart cart) {
+    // Static method to get the singleton instance
+    public static synchronized CartCookie getInstance() {
+        if (instance == null) {
+            instance = new CartCookie();
+        }
+        return instance;
+    }
+
+    // Constructor with parameters
+    public static synchronized CartCookie getInstance(String cookieValue, Date expiresAt) {
+        if (instance == null) {
+            instance = new CartCookie(cookieValue, expiresAt);
+        }
+        return instance;
+    }
+
+    // Initialize the singleton instance with parameters
+    private CartCookie(String cookieValue, Date expiresAt) {
         this.cookieValue = cookieValue;
         this.expiresAt = expiresAt;
-        this.cart = cart;
     }
 
     public String getCookieId() { return cookieId; }
     public String getCookieValue() { return cookieValue; }
     public Date getExpiresAt() { return expiresAt; }
-    public Cart getCart() { return cart; }
 
     public void setCookieValue(String cookieValue) { this.cookieValue = cookieValue; }
     public void setExpiresAt(Date expiresAt) { this.expiresAt = expiresAt; }
-    public void setCart(Cart cart) { this.cart = cart; }
+
+    private Cookie getCookie(){
+        Cookie[] cookies = VaadinService.getCurrentRequest().getCookies();
+        if(cookies != null) {
+            for(Cookie cookie : cookies) {
+                if(cookie.getName().equals(cookieId)) {
+                    return cookie;
+                }
+            }
+        }
+        return null;
+    }
 
     //Holt alle Cookies aus dem Speicher und überprüft ob ein Cart Cookie dabei ist.
-    public boolean checkCookieExists(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
+    public boolean checkCookieExists() {
+        Cookie[] cookies = VaadinService.getCurrentRequest().getCookies();
         if(cookies != null) {
             for(Cookie cookie : cookies) {
                 if(cookie.getName().equals(cookieId)) {
@@ -53,56 +78,54 @@ public class CartCookie {
     }
 
     // Sucht und Löscht das Cookie
-    public void deleteCookie(HttpServletRequest request, HttpServletResponse response, String cookieId) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals(cookieId)) {
-                    cookie.setMaxAge(0); // Setzt die Lebensdauer auf 0, um das Cookie zu löschen
-                    cookie.setValue(""); // Setzt den Wert auf leer
-                    cookie.setPath("/"); // Setzt den Pfad, um sicherzustellen, dass das Cookie gelöscht wird
-                    response.addCookie(cookie); // Fügt das Cookie zur Antwort hinzu, um es zu löschen
-                }
-            }
+    public void deleteCookie() {
+        Cookie cookie = getCookie();
+        if(cookie != null){
+            cookie.setMaxAge(0);
+            cookie.setValue("");
+            cookie.setPath("/");
+            cookie.setPath(VaadinService.getCurrentRequest().getContextPath());
+            VaadinService.getCurrentResponse().addCookie(cookie);
+        }else{
+            System.out.println("Cookie not found");
         }
     }
 
     // liest das Cookie ein und returnt es als hashmap damit muss dann eine abfrage an die db erstellt werden um den Warenkorb zu befüllen
-    public Map<String, Integer> readCookie(HttpServletRequest request) {
-        Map<String, Integer> cartItems = new HashMap<>();
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookieId.equals(cookie.getName())) {
-                    String value = cookie.getValue();
-                    String[] items = value.split(";");
-                    for (String item : items) {
-                        String[] parts = item.split(":");
-                        if (parts.length == 2) {
-                            String id = parts[0];
-                            int quantity = Integer.parseInt(parts[1]);
-                            cartItems.put(id, quantity);
-                        }
-                    }
+    public Map<Integer, Integer> readCookie() {
+        Map<Integer, Integer> cartItems = new HashMap<>();
+        Cookie mycookie = getCookie();
+        try{
+            if(mycookie != null) {
+                for (String item : mycookie.getValue().split(";")) {
+                    String[] parts = item.split(":");
+                    int id = Integer.parseInt(parts[0]);
+                    int amount = Integer.parseInt(parts[1]);
+                    cartItems.put(id, amount);
                 }
             }
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return cartItems;
     }
 
     // Aktualisiert oder erstellt das Cookie mit der neuen Liste von IDs und deren Anzahl
-    public static void updateCookie(HttpServletResponse response, Map<String, Integer> cartItems) {
-        StringBuilder cookieValue = new StringBuilder();
-        for (Map.Entry<String, Integer> entry : cartItems.entrySet()) {
-            if (cookieValue.length() > 0) {
-                cookieValue.append(";");
+    public void updateCookie(Map<Integer, Integer> cartItems) {
+        Cookie cookie = getCookie();
+        if(cookie != null) {
+            StringBuilder cookieValue = new StringBuilder();
+            for (Map.Entry<Integer, Integer> entry : cartItems.entrySet()) {
+                if (!cookieValue.isEmpty()) {
+                    cookieValue.append(";");
+                }
+                cookieValue.append(entry.getKey()).append(":").append(entry.getValue());
             }
-            cookieValue.append(entry.getKey()).append(":").append(entry.getValue());
+            Cookie newcookie = new Cookie(cookieId, cookieValue.toString());
+            newcookie.setMaxAge(cookieMaxAge);
+            newcookie.setPath(VaadinService.getCurrentRequest().getContextPath());
+            VaadinService.getCurrentResponse().addCookie(newcookie);
         }
-        Cookie cookie = new Cookie(cookieId, cookieValue.toString());
-        cookie.setMaxAge(cookieMaxAge);
-        cookie.setPath("/");
-        response.addCookie(cookie);
     }
 
 }
