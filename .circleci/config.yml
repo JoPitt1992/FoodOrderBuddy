@@ -75,19 +75,6 @@ jobs:
             EOF
         
 
-      #- run:
-      #    name: Deploy to Cloud Run
-      #    command: |
-      #      gcloud run deploy foodorderbuddy \
-      #        --image=europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:latest \
-      #        --add-cloudsql-instances "foodorderbuddy:europe-west1:foodorderbuddy-db" \
-      #        --set-env-vars CLOUD_SQL_CONNECTION_NAME="foodorderbuddy:europe-west1:foodorderbuddy-db" \
-      #        --region=europe-west1 \
-      #        --platform=managed \
-      #        --allow-unauthenticated \
-      #        --timeout=600s \
-      #        --service-account=circleci-deployer@foodorderbuddy.iam.gserviceaccount.com
-
 workflows:
   version: 2
   build-and-deploy:
