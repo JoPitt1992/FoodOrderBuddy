@@ -7,12 +7,18 @@ executors:
       - image: cimg/openjdk:21.0
 
 jobs:
+
   build:
     executor: docker-executor
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+
+      - run:
+          name: Git Info
+          command: |
+            git log -1
 
       - run:
           name: Build JAR (Production)
