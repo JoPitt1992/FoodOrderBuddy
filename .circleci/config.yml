@@ -89,7 +89,7 @@ jobs:
           name: Deploy to VM mit Commit-Tag
           command: |
             source $BASH_ENV
-            ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 << EOF
+            ssh -o StrictHostKeyChecking=no benjamin_mader@34.55.206.229 \<< EOF
               docker pull europe-west1-docker.pkg.dev/foodorderbuddy/foodorderbuddy/foodorderbuddy-app:${IMAGE_TAG}
               docker kill foodorderbuddy-app || true
               docker rm foodorderbuddy-app || true
