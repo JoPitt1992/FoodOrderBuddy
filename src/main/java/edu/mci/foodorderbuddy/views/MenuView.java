@@ -6,6 +6,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -25,86 +26,95 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RolesAllowed({"ROLE_USER", "ROLE_ADMIN"})
 @Route(value = "menu", layout = MainLayout.class)
 @PageTitle("Speisekarte | Food Order Buddy")
 public class MenuView extends VerticalLayout {
-    Grid<Menu> menuGrid = new Grid<>(Menu.class);
-    TextField filterText = new TextField();
-    MenuForm form;
+    private final Grid<Menu> dailyMenuGrid = new Grid<>(Menu.class, false);
+    private final Grid<Menu> regularMenuGrid = new Grid<>(Menu.class, false);
+    private final TextField filterText = new TextField();
+    private final MenuForm form;
     private final MenuService menuService;
     private final CartService cartService;
     private final SecurityService securityService;
+
+    private final VerticalLayout contentLayout = new VerticalLayout(); // Enthält Listen
+    private final HorizontalLayout mainLayout = new HorizontalLayout(); // Enthält Listen + Form
 
     public MenuView(MenuService menuService, CartService cartService, SecurityService securityService) {
         this.menuService = menuService;
         this.cartService = cartService;
         this.securityService = securityService;
 
-        addClassName("list-view");
         setSizeFull();
-        configureGrids();
+        setPadding(true);
+        getStyle().set("padding", "16px");
+        setSpacing(false);
+
+        configureGrid(dailyMenuGrid);
+        configureGrid(regularMenuGrid);
+
         form = new MenuForm();
         configureForm();
 
-        add(getToolbar(), getContent());
-        updateList();
+        contentLayout.addClassName("list-section");
+        contentLayout.setWidthFull();
+        contentLayout.setSpacing(false);
+        contentLayout.setPadding(false);
+        contentLayout.add(getToolbar());
+        contentLayout.add(createSection("Tagesmenü:", dailyMenuGrid));
+        contentLayout.add(createSection("Speisekarte:", regularMenuGrid));
+
+        form.setVisible(false);
+        mainLayout.setSizeFull();
+        mainLayout.add(contentLayout, form);
+        mainLayout.setFlexGrow(1, contentLayout);
+        mainLayout.setFlexGrow(0, form);
+
+        add(mainLayout);
+
+        updateLists();
         closeEditor();
     }
 
-    private void configureGrids() {
-        configureMenuGrid();
-    }
-
     private void configureForm() {
-        form.setWidth("50em");
+        form.setWidth("25%");
+        form.addClassName("menu-form");
         form.addListener(MenuForm.SaveEvent.class, this::saveMenu);
         form.addListener(MenuForm.DeleteEvent.class, this::deleteMenu);
         form.addListener(MenuForm.CloseEvent.class, e -> closeEditor());
         form.addListener(MenuForm.AddToCartEvent.class, this::addToCart);
     }
 
-    private void configureMenuGrid() {
-        menuGrid.addClassNames("menu-grid");
-        menuGrid.setSizeFull();
+    private void configureGrid(Grid<Menu> grid) {
+        grid.setWidthFull();
+        grid.addClassName("menu-grid");
+        grid.setHeight("300px");
 
-        menuGrid.setColumns("menuId", "menuTitle", "menuIngredients", "menuPrice");
-        menuGrid.getColumnByKey("menuId").setHeader("Nr.");
-        menuGrid.getColumnByKey("menuTitle").setHeader("Menübezeichnung");
-        menuGrid.getColumnByKey("menuIngredients").setHeader("Zutaten");
-        menuGrid.getColumnByKey("menuPrice")
-                .setHeader("Preis")
-                .setTextAlign(ColumnTextAlign.CENTER)
-                .setRenderer(new ComponentRenderer<>(menu -> {
-                    if (menu != null && menu.getMenuPrice() != null) {
-                        return new Text(String.format("%.2f %s", menu.getMenuPrice(), " €"));
-                    }
-                    return new Text("-");
-                }));
+        grid.addColumn(Menu::getMenuId).setHeader("Nr.").setAutoWidth(true);
+        grid.addColumn(Menu::getMenuTitle).setHeader("Menübezeichnung").setAutoWidth(true);
+        grid.addColumn(Menu::getMenuIngredients).setHeader("Zutaten").setAutoWidth(true);
+        grid.addColumn(new ComponentRenderer<>(menu -> {
+            if (menu != null && menu.getMenuPrice() != null) {
+                return new Text(String.format("%.2f €", menu.getMenuPrice()));
+            }
+            return new Text("-");
+        })).setHeader("Preis").setTextAlign(ColumnTextAlign.CENTER).setAutoWidth(true);
 
-
-        menuGrid.getColumns().forEach(col -> col.setAutoWidth(true));
-        menuGrid.asSingleSelect().addValueChangeListener(event -> editMenu(event.getValue()));
-    }
-
-    private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(menuGrid, form);
-        content.setFlexGrow(2, menuGrid);
-        content.setFlexGrow(1, form);
-        content.addClassNames("content");
-        content.setSizeFull();
-        return content;
+        grid.asSingleSelect().addValueChangeListener(event -> editMenu(event.getValue()));
     }
 
     private HorizontalLayout getToolbar() {
         filterText.setPlaceholder("Suche in der Speisekarte... ");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
-        filterText.addValueChangeListener(e -> updateList());
+        filterText.addValueChangeListener(e -> updateLists());
         filterText.setWidth("500px");
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText);
-        toolbar.addClassName("toolbar");
         toolbar.setWidthFull();
         toolbar.setAlignItems(Alignment.CENTER);
 
@@ -113,7 +123,6 @@ public class MenuView extends VerticalLayout {
             addMenubutton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             addMenubutton.addClickListener(click -> addMenu());
 
-            // Spacer hinzufügen, um den Button rechts auszurichten
             Div spacer = new Div();
             toolbar.add(spacer);
             toolbar.setFlexGrow(1, spacer);
@@ -123,25 +132,38 @@ public class MenuView extends VerticalLayout {
         return toolbar;
     }
 
-    public void editMenu(Menu menu) {
+    private VerticalLayout createSection(String title, Grid<Menu> grid) {
+        VerticalLayout section = new VerticalLayout();
+        section.setPadding(false);
+        section.setSpacing(false);
+
+        H2 heading = new H2(title);
+        heading.getStyle().set("margin-top", "12px");
+        heading.getStyle().set("margin-bottom", "12px");
+
+        section.add(heading, grid);
+        return section;
+    }
+
+
+    private void editMenu(Menu menu) {
         if (menu == null) {
             closeEditor();
         } else {
             form.setMenu(menu);
             form.setVisible(true);
-            addClassName("editing");
         }
     }
 
     private void saveMenu(MenuForm.SaveEvent event) {
         menuService.saveMenu(event.getMenu());
-        updateList();
+        updateLists();
         closeEditor();
     }
 
     private void deleteMenu(MenuForm.DeleteEvent event) {
         menuService.deleteMenu(event.getMenu());
-        updateList();
+        updateLists();
         closeEditor();
     }
 
@@ -151,35 +173,42 @@ public class MenuView extends VerticalLayout {
 
         if (user != null) {
             Cart cart = cartService.getOrCreateCart(user.getUsername());
-
             if (cart != null) {
                 cartService.addMenuToCart(cart, menu);
-
-                Notification notification = new Notification(
-                        "Menü zum Warenkorb hinzugefügt",
-                        3000,
-                        Notification.Position.MIDDLE);
+                Notification notification = new Notification("Menü zum Warenkorb hinzugefügt", 3000, Notification.Position.MIDDLE);
                 notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 notification.open();
             }
         }
-
         closeEditor();
     }
 
     private void closeEditor() {
         form.setMenu(null);
         form.setVisible(false);
-        removeClassName("editing");
+        dailyMenuGrid.asSingleSelect().clear();
+        regularMenuGrid.asSingleSelect().clear();
     }
 
     private void addMenu() {
-        menuGrid.asSingleSelect().clear();
+        closeEditor();
         editMenu(new Menu());
     }
 
-    private void updateList() {
-        menuGrid.setItems(menuService.findAllMenus(filterText.getValue()));
+    private void updateLists() {
+        String filter = filterText.getValue();
+        List<Menu> allMenus = menuService.findAllMenus(filter);
+
+        List<Menu> dailyMenus = allMenus.stream()
+                .filter(Menu::isMenuDaily)
+                .collect(Collectors.toList());
+
+        List<Menu> regularMenus = allMenus.stream()
+                .filter(menu -> !menu.isMenuDaily())
+                .collect(Collectors.toList());
+
+        dailyMenuGrid.setItems(dailyMenus);
+        regularMenuGrid.setItems(regularMenus);
     }
 
     private boolean isUserInRole(String role) {

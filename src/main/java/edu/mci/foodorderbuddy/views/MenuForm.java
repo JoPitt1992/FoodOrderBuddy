@@ -6,10 +6,12 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
@@ -24,6 +26,7 @@ public class MenuForm extends FormLayout {
     TextField menuTitle = new TextField("Menübezeichnung");
     TextField menuIngredients = new TextField("Zutaten");
     NumberField menuPrice = new NumberField("Preis");
+    Checkbox menuDaily = new Checkbox("Tagesmenü");
 
     Button save = new Button("Speichern");
     Button delete = new Button("Löschen");
@@ -42,9 +45,11 @@ public class MenuForm extends FormLayout {
                 .withValidator(new DoubleRangeValidator("Preis muss größer als 0 sein", 0.01, null))
                 .bind(Menu::getMenuPrice, Menu::setMenuPrice);
 
+        binder.forField(menuDaily)
+                .bind(Menu::isMenuDaily, Menu::setMenuDaily);
         binder.bindInstanceFields(this);
 
-        add(menuTitle, menuIngredients, menuPrice, createButtonsLayout());
+        add(menuTitle, menuIngredients, menuPrice, menuDaily, createButtonsLayout());
     }
 
     public void setMenu(Menu menu) {
@@ -55,15 +60,18 @@ public class MenuForm extends FormLayout {
             menuTitle.setReadOnly(false);
             menuIngredients.setReadOnly(false);
             menuPrice.setReadOnly(false);
+            menuDaily.setEnabled(true);
 
             save.setVisible(true);
             delete.setVisible(true);
             addToCart.setVisible(true);
+
         } else {
             // für User nur Read-Only Textfelder
             menuTitle.setReadOnly(true);
             menuIngredients.setReadOnly(true);
             menuPrice.setReadOnly(true);
+            menuDaily.setEnabled(false);
 
             save.setVisible(false);
             delete.setVisible(false);
@@ -75,7 +83,7 @@ public class MenuForm extends FormLayout {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
         close.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        addToCart.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addToCart.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
 
         save.addClickShortcut(Key.ENTER);
         close.addClickShortcut(Key.ESCAPE);
@@ -87,22 +95,49 @@ public class MenuForm extends FormLayout {
 
         binder.addStatusChangeListener(e -> save.setEnabled(binder.isValid()));
 
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setWidthFull();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        // Hintergrundfarbe für das gesamte Formular setzen
+        getElement().getStyle().set("background-color", "#f5f5f5");
+        getElement().getStyle().set("padding", "1rem");
+        getElement().getStyle().set("border-radius", "12px");
 
-        Div spacerLeft = new Div();
-        Div spacerRight = new Div();
+        // Buttons Breite und Margin setzen
+        addToCart.setWidth("100%");
 
-        layout.setFlexGrow(1, spacerLeft, spacerRight);
+        save.setWidth("30%");
+        delete.setWidth("30%");
+        close.setWidth("30%");
 
-        HorizontalLayout middleButtons = new HorizontalLayout(save, delete);
-        middleButtons.setSpacing(true);
+        // Manuelle Abstände zwischen Admin-Buttons (5% Margin rechts für save und delete)
+        save.getStyle().set("margin-right", "5%");
+        delete.getStyle().set("margin-right", "5%");
+        close.getStyle().remove("margin-right");
 
-        layout.add(addToCart, spacerLeft, middleButtons, spacerRight, close);
 
-        return layout;
+        // Oberste Zeile: Warenkorb-Button (100% Breite)
+        HorizontalLayout topRow = new HorizontalLayout(addToCart);
+        topRow.setWidthFull();
+        topRow.setPadding(false);
+        topRow.setMargin(false);
+        topRow.setSpacing(false);
+
+        // Untere Zeile: Admin Buttons (save, delete, close) mit Abstand
+        HorizontalLayout bottomRow = new HorizontalLayout(save, delete, close);
+        bottomRow.setWidthFull();
+        bottomRow.setPadding(false);
+        bottomRow.setMargin(false);
+        bottomRow.setSpacing(false);
+
+        // Vertikal kombinieren
+        VerticalLayout buttonLayout = new VerticalLayout(topRow, bottomRow);
+        buttonLayout.setPadding(false);
+        buttonLayout.setSpacing(true);
+        buttonLayout.setWidthFull();
+
+        buttonLayout.getStyle().set("margin-top", "var(--lumo-space-m)");
+
+        return buttonLayout;
     }
+
 
     private void validateAndSave() {
         try {

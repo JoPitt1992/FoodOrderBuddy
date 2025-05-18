@@ -56,6 +56,7 @@ public class Menu {
     public void setMenuPrice(Double menuPrice) {
         this.menuPrice = menuPrice;
     }
+    public void setMenuDaily(Boolean dailyMenu) {this.menuDaily = dailyMenu; }
 
     // Methoden für Rolle Admin
     // addMenu()
