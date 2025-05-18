@@ -2,6 +2,7 @@ package edu.mci.foodorderbuddy.data.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -14,13 +15,13 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartId;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "cart_menu",
             joinColumns = @JoinColumn(name = "cart_id"),
             inverseJoinColumns = @JoinColumn(name = "menu_id")
     )
-    private List<Menu> cartList;
+    private List<Menu> cartList = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "orderhistory_id")
@@ -39,11 +40,16 @@ public class Cart {
     private Boolean cartDelivered;
 
     @ManyToOne
+    @JoinColumn(name = "person_id")
     private Person owner;
-/*
-    @OneToOne(mappedBy = "cart", cascade = CascadeType.ALL)
-    private CartCookie cartCookie;
-*/
+
+    // Neue Felder für Zahlungsreferenz und Zahlungsmethode
+    @Column(name = "payment_reference")
+    private String paymentReference;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     public Cart(){}
 
     public Long getCartId() {return cartId; }
@@ -53,7 +59,9 @@ public class Cart {
     public Boolean getCartPayed() {return cartPayed; }
     public Date getCartPaydate() {return cartPaydate; }
     public Boolean getCartDelivered() {return cartDelivered; }
-    //public CartCookie getCartCookie() {return cartCookie; }
+    public Person getOwner() {return owner; }
+    public String getPaymentReference() {return paymentReference; }
+    public String getPaymentMethod() {return paymentMethod; }
 
     public void setCartList(List<Menu> cartList) {this.cartList = cartList; }
     public void setOrderHistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
@@ -61,5 +69,7 @@ public class Cart {
     public void setCartPayed(Boolean cartPayed) {this.cartPayed = cartPayed; }
     public void setCartPaydate(Date cartPaydate) {this.cartPaydate = cartPaydate; }
     public void setCartDelivered(Boolean cartDelivered) {this.cartDelivered = cartDelivered; }
-    //public void setCartCookie(CartCookie cartCookie) {this.cartCookie = cartCookie; }
+    public void setOwner(Person owner) {this.owner = owner; }
+    public void setPaymentReference(String paymentReference) {this.paymentReference = paymentReference; }
+    public void setPaymentMethod(String paymentMethod) {this.paymentMethod = paymentMethod; }
 }
