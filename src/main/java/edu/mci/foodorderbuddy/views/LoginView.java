@@ -13,7 +13,7 @@ import edu.mci.foodorderbuddy.data.test.DbInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("login")
-@PageTitle("Login | FoodOrder Buddy - Now on VM - Benni")
+@PageTitle("Login | FoodOrder Buddy - Now on VM")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -30,7 +30,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         login.setAction("login");
 
-        add(new H1("Food-Order-Buddy - Now On VM - Benni"), login);
+        add(new H1("Food-Order-Buddy - Now On VM - After Image Deletion"), login);
 
         DbInitializer dbInitializer = new DbInitializer(personRepository);
         this.personRepository = personRepository;
