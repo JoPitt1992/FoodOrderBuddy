@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,4 +21,7 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     // Einfachere Methode ohne verschachtelte Pfade
     @Query("SELECT c FROM Cart c JOIN c.owner p WHERE p.personUserName = :username")
     Optional<Cart> findCartByUsername(@Param("username") String username);
+
+    List<Cart> findAll();
+
 }

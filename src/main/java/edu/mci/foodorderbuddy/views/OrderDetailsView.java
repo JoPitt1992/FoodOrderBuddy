@@ -6,7 +6,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -19,6 +18,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Cart;
 import edu.mci.foodorderbuddy.data.entity.CartItem;
+import edu.mci.foodorderbuddy.data.entity.OrderStatus;
 import edu.mci.foodorderbuddy.security.SecurityService;
 import edu.mci.foodorderbuddy.service.OrderHistoryService;
 import jakarta.annotation.security.RolesAllowed;
@@ -126,7 +126,7 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         VerticalLayout rightInfo = new VerticalLayout();
         rightInfo.setPadding(false);
         rightInfo.setSpacing(false);
-        rightInfo.add(new Paragraph("Status: " + (cart.getCartDelivered() ? "Zugestellt" : "In Bearbeitung")));
+        rightInfo.add(new Paragraph("Status: " + cart.getCartOrderStatus()));
         rightInfo.add(new Paragraph("Zahlungsmethode: " + cart.getPaymentMethod()));
 
         orderInfo.add(leftInfo, rightInfo);
@@ -155,14 +155,18 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("orderhistory")));
 
         // Wenn die Bestellung noch nicht als geliefert markiert ist und der Benutzer ein Admin ist
-        if (!Boolean.TRUE.equals(cart.getCartDelivered()) &&
+        if (cart.getCartOrderStatus() != OrderStatus.ZUGESTELLT &&
                 securityService.getAuthenticatedUser().getAuthorities().stream()
                         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+
             Button markAsDeliveredButton = new Button("Als geliefert markieren");
             markAsDeliveredButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             markAsDeliveredButton.setIcon(new Icon(VaadinIcon.CHECK));
+
             markAsDeliveredButton.addClickListener(e -> {
-                orderHistoryService.markCartAsDelivered(cart.getCartId());
+                // Setze den Status auf ZUGESTELLT und speichere ihn
+                cart.setCartOrderStatus(OrderStatus.ZUGESTELLT);
+                orderHistoryService.save(cart);
                 Notification.show("Bestellung als geliefert markiert",
                                 3000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_SUCCESS);

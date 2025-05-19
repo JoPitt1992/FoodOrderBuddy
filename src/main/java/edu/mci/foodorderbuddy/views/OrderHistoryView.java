@@ -1,6 +1,7 @@
 package edu.mci.foodorderbuddy.views;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
@@ -16,9 +17,12 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.OrderStatus;
 import edu.mci.foodorderbuddy.security.SecurityService;
 import edu.mci.foodorderbuddy.service.OrderHistoryService;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.text.NumberFormat;
@@ -85,21 +89,57 @@ public class OrderHistoryView extends VerticalLayout {
                 .setSortable(true)
                 .setFlexGrow(1);
 
-        orderGrid.addColumn(new ComponentRenderer<>(cart -> {
-                    if (Boolean.TRUE.equals(cart.getCartDelivered())) {
-                        Span delivered = new Span("Zugestellt");
-                        delivered.getStyle().set("color", "var(--lumo-success-color)");
-                        delivered.getStyle().set("font-weight", "bold");
-                        return delivered;
-                    } else {
-                        Span pending = new Span("In Bearbeitung");
-                        pending.getStyle().set("color", "var(--lumo-primary-color)");
-                        return pending;
-                    }
-                }))
-                .setHeader("Status")
-                .setSortable(true)
-                .setFlexGrow(1);
+        if (isUserInRole("ROLE_ADMIN")) {
+            orderGrid.addColumn(new ComponentRenderer<>(cart -> {
+                        ComboBox<OrderStatus> statusBox = new ComboBox<>();
+                        statusBox.setItems(OrderStatus.values());
+                        statusBox.setItemLabelGenerator(OrderStatus::getDisplayName);
+
+                        //Falls kein Status gesetzt
+                        statusBox.setValue(cart.getCartOrderStatus() != null
+                                ? cart.getCartOrderStatus()
+                                : OrderStatus.IN_BEARBEITUNG);
+
+                        statusBox.addValueChangeListener(event -> {
+                            OrderStatus selectedStatus = event.getValue();
+                            if (selectedStatus == null) return;
+
+                            cart.setCartOrderStatus(selectedStatus);
+                            orderHistoryService.save(cart);
+                            Notification.show("Status geändert auf: " + selectedStatus.getDisplayName());
+                            orderGrid.getDataProvider().refreshItem(cart);
+                        });
+
+                return statusBox;
+            }))
+            .setHeader("Status")
+            .setSortable(false)
+            .setFlexGrow(1);
+        } else {
+            orderGrid.addColumn(new ComponentRenderer<>(cart -> {
+                Span statusLabel;
+
+                OrderStatus status = cart.getCartOrderStatus();
+
+                if (status == OrderStatus.ZUGESTELLT) {
+                    statusLabel = new Span("Zugestellt");
+                    statusLabel.getStyle().set("color", "var(--lumo-success-color)");
+                    statusLabel.getStyle().set("font-weight", "bold");
+                } else if (status == OrderStatus.IN_ZUSTELLUNG) {
+                    statusLabel = new Span("In Zustellung");
+                    statusLabel.getStyle().set("color", "orange");
+                    statusLabel.getStyle().set("font-weight", "bold");
+                } else {
+                    statusLabel = new Span("In Bearbeitung");
+                    statusLabel.getStyle().set("color", "var(--lumo-primary-color)");
+                }
+
+                return statusLabel;
+            }))
+            .setHeader("Status")
+            .setSortable(true)
+            .setFlexGrow(1);
+        }
 
         orderGrid.addColumn(new ComponentRenderer<>(cart -> {
                     Button viewButton = new Button("Details");
@@ -136,7 +176,20 @@ public class OrderHistoryView extends VerticalLayout {
     private void loadOrders() {
         UserDetails user = securityService.getAuthenticatedUser();
 
-        if (user != null) {
+        if(isUserInRole("ROLE_ADMIN")){
+            String searchTerm = filterText.getValue();
+            List<Cart> orders = orderHistoryService.getAllOrdersByTerm(searchTerm);
+
+            if (orders.isEmpty()) {
+                orderGrid.setItems();
+                if (!searchTerm.isEmpty()) {
+                    Notification.show("Keine Bestellungen gefunden für: " + searchTerm);
+                }
+            } else {
+                orderGrid.setItems(orders);
+            }
+        }
+        else if (user != null) {
             String searchTerm = filterText.getValue();
             List<Cart> orders = orderHistoryService.searchOrdersByTerm(user.getUsername(), searchTerm);
 
@@ -149,5 +202,11 @@ public class OrderHistoryView extends VerticalLayout {
                 orderGrid.setItems(orders);
             }
         }
+    }
+
+    private boolean isUserInRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(role));
     }
 }

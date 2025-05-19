@@ -2,6 +2,7 @@ package edu.mci.foodorderbuddy.service;
 
 import edu.mci.foodorderbuddy.data.entity.Cart;
 import edu.mci.foodorderbuddy.data.entity.OrderHistory;
+import edu.mci.foodorderbuddy.data.entity.OrderStatus;
 import edu.mci.foodorderbuddy.data.entity.Person;
 import edu.mci.foodorderbuddy.data.repository.CartRepository;
 import edu.mci.foodorderbuddy.data.repository.OrderHistoryRepository;
@@ -115,7 +116,7 @@ public class OrderHistoryService {
 
         if (cartOpt.isPresent()) {
             Cart cart = cartOpt.get();
-            cart.setCartDelivered(true);
+            cart.setCartOrderStatus(OrderStatus.ZUGESTELLT);
             cartRepository.save(cart);
         }
     }
@@ -141,5 +142,48 @@ public class OrderHistoryService {
                                                 item.getMenu().getMenuIngredients().toLowerCase().contains(lowerTerm))
                 )
                 .toList();
+    }
+
+    /**
+     * Alle Bestellungen für Admin
+     */
+    public List<Cart> getAllOrdersByTerm(String searchTerm) {
+        List<Cart> paidCarts = cartRepository.findAll();
+
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            return paidCarts.stream()
+                    .sorted(Comparator.comparing(
+                            Cart::getCartPaydate,
+                            Comparator.nullsLast(Comparator.naturalOrder())
+                    ).reversed())
+                    .toList();
+        }
+
+        String lowerTerm = searchTerm.toLowerCase();
+
+        return paidCarts.stream()
+                .filter(cart ->
+                        (cart.getPaymentReference() != null &&
+                                cart.getPaymentReference().toLowerCase().contains(lowerTerm)) ||
+                                (cart.getPaymentMethod() != null &&
+                                        cart.getPaymentMethod().toLowerCase().contains(lowerTerm)) ||
+                                cart.getCartItems().stream().anyMatch(item ->
+                                        item.getMenu().getMenuTitle().toLowerCase().contains(lowerTerm) ||
+                                                item.getMenu().getMenuIngredients().toLowerCase().contains(lowerTerm))
+                )
+                .sorted(Comparator.comparing(
+                    Cart::getCartPaydate,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed())
+                .toList();
+    }
+
+    /**
+     * Speichere Cart
+     * @param cart
+     */
+
+    public void save(Cart cart) {
+        cartRepository.save(cart);
     }
 }
