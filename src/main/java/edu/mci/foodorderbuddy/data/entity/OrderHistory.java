@@ -2,6 +2,7 @@ package edu.mci.foodorderbuddy.data.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,13 +22,34 @@ public class OrderHistory {
     @JoinColumn(name = "orderhistory_id")
     private List<Cart> carts;
 
-    public OrderHistory() {}
+    public OrderHistory() {
+    }
 
-    public Long getOrderhistoryId() {return orderhistoryId;}
-    public Person getPerson() {return person;}
-    public List<Cart> getCarts() {return carts;}
+    public Long getOrderhistoryId() {
+        return orderhistoryId;
+    }
 
-    public void setPerson(Person person) {this.person = person; }
-    public void setCarts(List<Cart> carts) {this.carts = carts;}
-    public void addCart(Cart cart) {carts.add(cart); cart.setOrderHistory(this); }
+    public Person getPerson() {
+        return person;
+    }
+
+    public List<Cart> getCarts() {
+        return carts;
+    }
+
+    public void setPerson(Person person) {
+        this.person = person;
+    }
+
+    public void setCarts(List<Cart> carts) {
+        this.carts = carts;
+    }
+
+    public void addCart(Cart cart) {
+        if (carts == null) {
+            carts = new ArrayList<>();
+        }
+        carts.add(cart);
+        cart.setOrderHistory(this);
+    }
 }

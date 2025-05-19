@@ -239,10 +239,24 @@ public class CartService {
             cart.setPaymentMethod(paymentMethod);
 
             cartRepository.save(cart);
+
+            addToOrderHistory(cart);
             return true;
         }
 
         return false;
+    }
+
+    @Autowired
+    private OrderHistoryService orderHistoryService;
+
+    /**
+     * Nach der Bezahlung wird der Warenkorb der Bestellhistorie hinzugefügt
+     */
+    private void addToOrderHistory(Cart cart) {
+        if (cart != null && Boolean.TRUE.equals(cart.getCartPayed())) {
+            orderHistoryService.addCartToOrderHistory(cart);
+        }
     }
 
     /**

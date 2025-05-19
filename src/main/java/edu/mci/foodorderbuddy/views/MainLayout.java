@@ -82,17 +82,17 @@ public class MainLayout extends AppLayout {
                 "Warenkorb",
                 CartView.class);
 
-        // Bestellhistorie
-        RouterLink orderHistoryLink = createDrawerLink(
-                VaadinIcon.LIST,
-                "Bestellhistorie",
-                OrderHistoryView.class);
-
         // Benutzerdaten
         RouterLink personDataLink = createDrawerLink(
                 VaadinIcon.USER,
                 "Benutzerdaten",
                 PersonDataView.class);
+
+        // Bestellhistorie
+        RouterLink orderHistoryLink = createDrawerLink(
+                VaadinIcon.LIST,
+                "Bestellhistorie",
+                OrderHistoryView.class);
 
         // Dashboard (nur für Admins)
         boolean isAdmin = securityService.getAuthenticatedUser() != null &&
