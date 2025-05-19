@@ -88,6 +88,16 @@ public class OrderHistoryView extends VerticalLayout {
                 .setSortable(true)
                 .setFlexGrow(1);
 
+        orderGrid.addColumn(cart -> {
+                    if (cart.getOwner() != null) {
+                        return cart.getOwner().getPersonFirstName() + " " + cart.getOwner().getPersonLastName();
+                    }
+                    return "-";
+                })
+                .setHeader("Kunde")
+                .setSortable(true)
+                .setFlexGrow(1);
+
         orderGrid.addColumn(cart -> cart.getCartPaydate() != null ? dateFormat.format(cart.getCartPaydate()) : "")
                 .setHeader("Bestelldatum")
                 .setSortable(true)

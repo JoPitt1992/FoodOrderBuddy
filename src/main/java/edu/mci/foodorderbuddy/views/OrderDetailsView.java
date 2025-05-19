@@ -178,6 +178,9 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         leftInfo.setSpacing(false);
         leftInfo.add(new Paragraph("Bestellnummer: " + cart.getPaymentReference()));
         leftInfo.add(new Paragraph("Bestelldatum: " + dateFormat.format(cart.getCartPaydate())));
+        if (cart.getOwner() != null) {
+            leftInfo.add(new Paragraph("Kunde: " + cart.getOwner().getPersonFirstName() + " " + cart.getOwner().getPersonLastName()));
+        }
 
         VerticalLayout rightInfo = new VerticalLayout();
         rightInfo.setPadding(false);
