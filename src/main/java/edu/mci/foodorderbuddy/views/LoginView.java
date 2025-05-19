@@ -10,7 +10,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import edu.mci.foodorderbuddy.data.repository.PersonRepository;
-import edu.mci.foodorderbuddy.data.test.DbInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("login")
@@ -21,7 +20,6 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     private final LoginForm login = new LoginForm();
     private final PersonRepository personRepository;
 
-
     @Autowired
     public LoginView(PersonRepository personRepository){
         addClassName("login-view");
@@ -30,13 +28,16 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setJustifyContentMode(JustifyContentMode.CENTER);
 
         login.setAction("login");
+
+        // Important: Make sure this is set to handle the redirect after login
+        login.setForgotPasswordButtonVisible(false);
+
         Anchor registryLink = new Anchor("registry", "Neu registrieren");
 
         add(new H2("Food-Order-Buddy"),
                 login,
                 registryLink);
 
-        // DbInitializer dbInitializer = new DbInitializer(personRepository);
         this.personRepository = personRepository;
     }
 
