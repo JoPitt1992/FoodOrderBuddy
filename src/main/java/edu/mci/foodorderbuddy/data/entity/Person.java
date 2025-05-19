@@ -32,8 +32,7 @@ public class Person {
     private String personAddress = "";
 
     @Column(name = "person_postalcode")
-    @Positive
-    private Integer personPostalCode;
+    private String personPostalCode;
 
     @Column(name = "person_city")
     private String personCity = "";
@@ -75,7 +74,7 @@ public class Person {
     }
     public String getPersonPassword() {return personPassword; }
     public String getPersonAddress() {return personAddress;}
-    public Integer getPersonPostalCode() {return personPostalCode;}
+    public String getPersonPostalCode() {return personPostalCode;}
     public String getPersonCity() {return personCity;}
     public String getPersonEmail() {
         return personEmail;
@@ -95,7 +94,7 @@ public class Person {
     }
     public void setPersonPassword(String password) {this.personPassword = password; }
     public void setPersonAddress(String address) {this.personAddress = address; }
-    public void setPersonPostalCode(Integer postalCode) {this.personPostalCode = postalCode;}
+    public void setPersonPostalCode(String postalCode) {this.personPostalCode = postalCode;}
     public void setPersonCity(String city) {this.personCity = city;}
     public void setPersonEmail(String email) {
         this.personEmail = email;

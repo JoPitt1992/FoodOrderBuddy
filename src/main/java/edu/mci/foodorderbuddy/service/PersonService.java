@@ -18,4 +18,8 @@ public class PersonService {
     public void updateUser(Person updatedUser) {
         personRepository.save(updatedUser);
     }
+
+    public Optional<Person> findByUsername(String username) {
+        return personRepository.findByPersonUserName(username);
+    }
 }

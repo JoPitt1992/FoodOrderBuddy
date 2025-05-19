@@ -38,7 +38,7 @@ public class DbInitializer {
         p.setPersonUserName("Pez");
         p.setPersonPassword("letmepass");
         p.setPersonAddress("Hinterberg 13");
-        p.setPersonPostalCode(123);
+        p.setPersonPostalCode("123");
         p.setPersonCity("Innsbruck");
         p.setPersonEmail("asdfasfd@swd.de");
         p.setPersonPhonenumber("066534234");
