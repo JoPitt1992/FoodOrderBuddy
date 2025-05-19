@@ -18,6 +18,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.CartItem;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 import edu.mci.foodorderbuddy.security.SecurityService;
 import edu.mci.foodorderbuddy.service.CartService;
@@ -101,21 +102,22 @@ public class PaymentView extends VerticalLayout implements BeforeEnterObserver {
         H3 summaryTitle = new H3("Bestellübersicht");
         cartSummary.add(summaryTitle);
 
-        if (currentCart == null || currentCart.getCartList() == null || currentCart.getCartList().isEmpty()) {
+        if (currentCart == null || currentCart.getCartItems() == null || currentCart.getCartItems().isEmpty()) {
             cartSummary.add(new Span("Ihr Warenkorb ist leer"));
             return;
         }
 
         // Menüs anzeigen
-        for (Menu menu : currentCart.getCartList()) {
+        for (CartItem item : currentCart.getCartItems()) {
             HorizontalLayout menuItem = new HorizontalLayout();
             menuItem.setWidthFull();
 
-            Span menuTitle = new Span(menu.getMenuTitle());
+            Span menuTitle = new Span(item.getQuantity() + " × " + item.getMenu().getMenuTitle());
             menuTitle.setWidth("70%");
 
             NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.GERMANY);
-            Span menuPrice = new Span(formatter.format(menu.getMenuPrice()));
+            double itemTotal = item.getMenu().getMenuPrice() * item.getQuantity();
+            Span menuPrice = new Span(formatter.format(itemTotal));
             menuPrice.getStyle().set("text-align", "right");
             menuPrice.setWidth("30%");
 

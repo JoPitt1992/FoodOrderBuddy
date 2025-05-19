@@ -186,13 +186,18 @@ public class MenuView extends VerticalLayout {
 
     private void addToCart(MenuForm.AddToCartEvent event) {
         Menu menu = event.getMenu();
+        int quantity = event.getQuantity(); // Hole die Menge aus dem Event
         UserDetails user = securityService.getAuthenticatedUser();
 
         if (user != null) {
             Cart cart = cartService.getOrCreateCart(user.getUsername());
             if (cart != null) {
-                cartService.addMenuToCart(cart, menu);
-                Notification notification = new Notification("Menü zum Warenkorb hinzugefügt", 3000, Notification.Position.MIDDLE);
+                cartService.addMenuToCart(cart, menu, quantity);
+                Notification notification = new Notification(
+                        quantity + " × " + menu.getMenuTitle() + " zum Warenkorb hinzugefügt",
+                        3000,
+                        Notification.Position.MIDDLE
+                );
                 notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 notification.open();
             }

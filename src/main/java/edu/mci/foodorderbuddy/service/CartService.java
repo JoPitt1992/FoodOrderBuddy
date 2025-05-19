@@ -1,8 +1,10 @@
 package edu.mci.foodorderbuddy.service;
 
 import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.CartItem;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 import edu.mci.foodorderbuddy.data.entity.Person;
+import edu.mci.foodorderbuddy.data.repository.CartItemRepository;
 import edu.mci.foodorderbuddy.data.repository.CartRepository;
 import edu.mci.foodorderbuddy.data.repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +21,13 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final PersonRepository personRepository;
+    private final CartItemRepository cartItemRepository;
 
     @Autowired
-    public CartService(CartRepository cartRepository, PersonRepository personRepository) {
+    public CartService(CartRepository cartRepository, PersonRepository personRepository, CartItemRepository cartItemRepository) {
         this.cartRepository = cartRepository;
         this.personRepository = personRepository;
+        this.cartItemRepository = cartItemRepository;
     }
 
     /**
@@ -74,6 +78,7 @@ public class CartService {
 
             Cart newCart = new Cart();
             newCart.setOwner(person);
+            newCart.setCartItems(new ArrayList<>());
             newCart.setCartList(new ArrayList<>());
             newCart.setCartPrice(0.0);
             newCart.setCartPayed(false);
@@ -92,35 +97,42 @@ public class CartService {
     }
 
     /**
-     * Fügt ein Menü zum Warenkorb hinzu
+     * Fügt ein Menü zum Warenkorb hinzu mit einer bestimmten Menge
      */
     @Transactional
-    public void addMenuToCart(Cart cart, Menu menu) {
+    public void addMenuToCart(Cart cart, Menu menu, int quantity) {
         System.out.println("addMenuToCart: Start - Cart ID: " +
                 (cart != null ? cart.getCartId() : "null") +
-                ", Menu: " + (menu != null ? menu.getMenuTitle() : "null"));
+                ", Menu: " + (menu != null ? menu.getMenuTitle() : "null") +
+                ", Quantity: " + quantity);
 
-        if (cart == null || menu == null) {
-            System.out.println("addMenuToCart: Fehler - Cart oder Menu ist null");
+        if (cart == null || menu == null || quantity <= 0) {
+            System.out.println("addMenuToCart: Fehler - Ungültige Parameter");
             return;
         }
 
         try {
-            // Überprüfen Sie, ob die Liste initialisiert ist
-            if (cart.getCartList() == null) {
-                System.out.println("addMenuToCart: CartList ist null, initialisiere Liste");
-                cart.setCartList(new ArrayList<>());
+            // Prüfen, ob das Menü bereits im Warenkorb ist
+            CartItem existingItem = cart.findCartItemByMenu(menu);
+
+            if (existingItem != null) {
+                // Menü ist bereits im Warenkorb, Anzahl erhöhen
+                existingItem.setQuantity(existingItem.getQuantity() + quantity);
+                System.out.println("addMenuToCart: Menge für existierendes Menü erhöht: " +
+                        existingItem.getMenu().getMenuTitle() + ", neue Menge: " + existingItem.getQuantity());
+            } else {
+                // Neues CartItem erstellen
+                CartItem cartItem = new CartItem(cart, menu, quantity);
+                cart.addCartItem(cartItem);
+                System.out.println("addMenuToCart: Neues Menü hinzugefügt: " +
+                        menu.getMenuTitle() + ", Menge: " + quantity);
+
+                // Auch zur alten Liste hinzufügen für Kompatibilität
+                cart.getCartList().add(menu);
             }
 
-            // Menü hinzufügen
-            cart.getCartList().add(menu);
-            System.out.println("addMenuToCart: Menü zur Liste hinzugefügt, neue Größe: " +
-                    cart.getCartList().size());
-
             // Preis aktualisieren
-            double total = calculateTotalPrice(cart);
-            cart.setCartPrice(total);
-            System.out.println("addMenuToCart: Warenkorb-Preis aktualisiert: " + total);
+            updateCartPrice(cart);
 
             // Warenkorb speichern
             cartRepository.save(cart);
@@ -129,17 +141,28 @@ public class CartService {
         } catch (Exception e) {
             System.err.println("addMenuToCart: Fehler - " + e.getMessage());
             e.printStackTrace();
-            throw e; // Weiterleiten für besseres Fehler-Handling
+            throw e;
         }
     }
 
     /**
-     * Entfernt ein Menü aus dem Warenkorb
+     * Rückwärtskompatible Methode - fügt ein Menü mit Menge 1 hinzu
      */
     @Transactional
-    public void removeMenuFromCart(Cart cart, Menu menu) {
-        if (cart != null && menu != null && cart.getCartList() != null) {
-            cart.getCartList().remove(menu);
+    public void addMenuToCart(Cart cart, Menu menu) {
+        addMenuToCart(cart, menu, 1);
+    }
+
+    /**
+     * Entfernt ein CartItem aus dem Warenkorb
+     */
+    @Transactional
+    public void removeCartItem(Cart cart, CartItem item) {
+        if (cart != null && item != null) {
+            cart.removeCartItem(item);
+
+            // Auch aus der alten Liste entfernen
+            cart.getCartList().remove(item.getMenu());
 
             // Preis aktualisieren
             updateCartPrice(cart);
@@ -149,16 +172,40 @@ public class CartService {
     }
 
     /**
+     * Rückwärtskompatible Methode - entfernt ein Menü aus dem Warenkorb
+     */
+    @Transactional
+    public void removeMenuFromCart(Cart cart, Menu menu) {
+        if (cart != null && menu != null) {
+            CartItem item = cart.findCartItemByMenu(menu);
+            if (item != null) {
+                removeCartItem(cart, item);
+            }
+        }
+    }
+
+    /**
      * Berechnet den Gesamtpreis des Warenkorbs
      */
     public double calculateTotalPrice(Cart cart) {
-        if (cart == null || cart.getCartList() == null || cart.getCartList().isEmpty()) {
+        if (cart == null) {
             return 0.0;
         }
 
-        return cart.getCartList().stream()
-                .mapToDouble(Menu::getMenuPrice)
-                .sum();
+        // Wenn cartItems vorhanden sind, berechne Preis basierend auf diesen
+        if (cart.getCartItems() != null && !cart.getCartItems().isEmpty()) {
+            return cart.getCartItems().stream()
+                    .mapToDouble(item -> item.getMenu().getMenuPrice() * item.getQuantity())
+                    .sum();
+        }
+        // Sonst verwende die alte Liste ohne Mengenangaben
+        else if (cart.getCartList() != null && !cart.getCartList().isEmpty()) {
+            return cart.getCartList().stream()
+                    .mapToDouble(Menu::getMenuPrice)
+                    .sum();
+        }
+
+        return 0.0;
     }
 
     /**
@@ -189,6 +236,7 @@ public class CartService {
             // Generieren einer eindeutigen Bestellnummer
             String paymentReference = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             cart.setPaymentReference(paymentReference);
+            cart.setPaymentMethod(paymentMethod);
 
             cartRepository.save(cart);
             return true;

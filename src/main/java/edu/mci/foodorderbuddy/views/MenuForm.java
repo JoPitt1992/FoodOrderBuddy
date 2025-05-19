@@ -28,6 +28,9 @@ public class MenuForm extends FormLayout {
     NumberField menuPrice = new NumberField("Preis");
     Checkbox menuDaily = new Checkbox("Tagesmenü");
 
+    // Neues Feld für die Anzahl
+    NumberField quantity = new NumberField("Anzahl");
+
     Button save = new Button("Speichern");
     Button delete = new Button("Löschen");
     Button close = new Button("Abbrechen");
@@ -49,7 +52,30 @@ public class MenuForm extends FormLayout {
                 .bind(Menu::isMenuDaily, Menu::setMenuDaily);
         binder.bindInstanceFields(this);
 
-        add(menuTitle, menuIngredients, menuPrice, menuDaily, createButtonsLayout());
+        // Konfiguration des quantity-Felds
+        quantity.setValue(1.0);
+        quantity.setMin(1);
+        quantity.setStep(1);
+
+        // Statt setHasControls, bauen wir unsere eigenen Controls
+        Button minusButton = new Button("-", e -> {
+            if (quantity.getValue() != null && quantity.getValue() > 1) {
+                quantity.setValue(quantity.getValue() - 1);
+            }
+        });
+
+        Button plusButton = new Button("+", e -> {
+            if (quantity.getValue() != null) {
+                quantity.setValue(quantity.getValue() + 1);
+            } else {
+                quantity.setValue(1.0);
+            }
+        });
+
+        HorizontalLayout quantityControls = new HorizontalLayout(minusButton, quantity, plusButton);
+        quantityControls.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        add(menuTitle, menuIngredients, menuPrice, menuDaily, quantityControls, createButtonsLayout());
     }
 
     public void setMenu(Menu menu) {
@@ -91,7 +117,12 @@ public class MenuForm extends FormLayout {
         save.addClickListener(event -> validateAndSave());
         delete.addClickListener(event -> fireEvent(new DeleteEvent(this, menu)));
         close.addClickListener(event -> fireEvent(new CloseEvent(this)));
-        addToCart.addClickListener(event -> fireEvent(new AddToCartEvent(this, menu)));
+
+        // Aktualisiert, um die Menge zu übergeben
+        addToCart.addClickListener(event -> {
+            int qty = quantity.getValue() != null ? quantity.getValue().intValue() : 1;
+            fireEvent(new AddToCartEvent(this, menu, qty));
+        });
 
         binder.addStatusChangeListener(e -> save.setEnabled(binder.isValid()));
 
@@ -137,7 +168,6 @@ public class MenuForm extends FormLayout {
 
         return buttonLayout;
     }
-
 
     private void validateAndSave() {
         try {
@@ -186,8 +216,15 @@ public class MenuForm extends FormLayout {
     }
 
     public static class AddToCartEvent extends MenuFormEvent {
-        AddToCartEvent(MenuForm source, Menu menu) {
+        private final int quantity;
+
+        AddToCartEvent(MenuForm source, Menu menu, int quantity) {
             super(source, menu);
+            this.quantity = quantity;
+        }
+
+        public int getQuantity() {
+            return quantity;
         }
     }
 

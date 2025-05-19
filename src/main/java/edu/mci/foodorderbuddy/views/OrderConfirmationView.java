@@ -15,6 +15,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.CartItem;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 import edu.mci.foodorderbuddy.data.repository.CartRepository;
 import jakarta.annotation.security.RolesAllowed;
@@ -88,16 +89,17 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
         orderSummary.setPadding(false);
         orderSummary.setSpacing(false);
 
-        if (cart.getCartList() != null) {
-            for (Menu menu : cart.getCartList()) {
+        if (cart.getCartItems() != null) {
+            for (CartItem item : cart.getCartItems()) {
                 HorizontalLayout menuItem = new HorizontalLayout();
                 menuItem.setWidthFull();
 
-                Span menuTitle = new Span(menu.getMenuTitle());
+                Span menuTitle = new Span(item.getQuantity() + " × " + item.getMenu().getMenuTitle());
                 menuTitle.setWidth("70%");
 
                 NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.GERMANY);
-                Span menuPrice = new Span(formatter.format(menu.getMenuPrice()));
+                double itemTotal = item.getMenu().getMenuPrice() * item.getQuantity();
+                Span menuPrice = new Span(formatter.format(itemTotal));
                 menuPrice.setWidth("30%");
                 menuPrice.getStyle().set("text-align", "right");
 

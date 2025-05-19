@@ -17,6 +17,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Cart;
+import edu.mci.foodorderbuddy.data.entity.CartItem;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 import edu.mci.foodorderbuddy.data.entity.Person;
 import edu.mci.foodorderbuddy.security.SecurityService;
@@ -32,7 +33,7 @@ import java.util.Locale;
 @Route(value = "cart", layout = MainLayout.class)
 public class CartView extends VerticalLayout {
 
-    private Grid<Menu> menuGrid = new Grid<>(Menu.class);
+    private Grid<CartItem> menuGrid = new Grid<>(CartItem.class);
     private final CartService cartService;
     private final SecurityService securityService;
 
@@ -82,30 +83,47 @@ public class CartView extends VerticalLayout {
 
         menuGrid.setColumns(); // Alle Standard-Spalten entfernen
 
-        menuGrid.addColumn(Menu::getMenuTitle)
+        menuGrid.addColumn(item -> item.getMenu().getMenuTitle())
                 .setHeader("Menü")
                 .setFlexGrow(2);
 
-        menuGrid.addColumn(Menu::getMenuIngredients)
+        menuGrid.addColumn(item -> item.getMenu().getMenuIngredients())
                 .setHeader("Zutaten")
                 .setFlexGrow(3);
 
-        menuGrid.addColumn(new ComponentRenderer<>(menu -> {
-                    if (menu != null && menu.getMenuPrice() != null) {
+        menuGrid.addColumn(CartItem::getQuantity)
+                .setHeader("Anzahl")
+                .setTextAlign(ColumnTextAlign.CENTER)
+                .setFlexGrow(1);
+
+        menuGrid.addColumn(new ComponentRenderer<>(item -> {
+                    if (item != null && item.getMenu() != null && item.getMenu().getMenuPrice() != null) {
                         NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.GERMANY);
-                        return new Text(formatter.format(menu.getMenuPrice()));
+                        return new Text(formatter.format(item.getMenu().getMenuPrice()));
                     }
                     return new Text("-");
                 }))
-                .setHeader("Preis")
+                .setHeader("Einzelpreis")
+                .setTextAlign(ColumnTextAlign.END)
+                .setFlexGrow(1);
+
+        menuGrid.addColumn(new ComponentRenderer<>(item -> {
+                    if (item != null && item.getMenu() != null && item.getMenu().getMenuPrice() != null) {
+                        NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+                        double total = item.getMenu().getMenuPrice() * item.getQuantity();
+                        return new Text(formatter.format(total));
+                    }
+                    return new Text("-");
+                }))
+                .setHeader("Gesamtpreis")
                 .setTextAlign(ColumnTextAlign.END)
                 .setFlexGrow(1);
 
         // Entfernen-Button
-        menuGrid.addColumn(new ComponentRenderer<>(menu -> {
+        menuGrid.addColumn(new ComponentRenderer<>(item -> {
                     Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
                     removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
-                    removeButton.addClickListener(e -> removeMenuFromCart(menu));
+                    removeButton.addClickListener(e -> removeCartItem(item));
                     return removeButton;
                 }))
                 .setHeader("Entfernen")
@@ -122,7 +140,7 @@ public class CartView extends VerticalLayout {
         checkoutButton.setIcon(new Icon(VaadinIcon.CART));
 
         checkoutButton.addClickListener(e -> {
-            if (currentCart != null && !currentCart.getCartList().isEmpty()) {
+            if (currentCart != null && !currentCart.getCartItems().isEmpty()) {
                 // Weiterleitung zur Bezahlseite
                 getUI().ifPresent(ui -> ui.navigate("payment"));
             } else {
@@ -144,8 +162,8 @@ public class CartView extends VerticalLayout {
     }
 
     private void updateCartDisplay() {
-        if (currentCart != null && currentCart.getCartList() != null) {
-            menuGrid.setItems(currentCart.getCartList());
+        if (currentCart != null && currentCart.getCartItems() != null) {
+            menuGrid.setItems(currentCart.getCartItems());
 
             // Gesamtpreis berechnen und anzeigen
             double total = cartService.calculateTotalPrice(currentCart);
@@ -157,9 +175,9 @@ public class CartView extends VerticalLayout {
         }
     }
 
-    private void removeMenuFromCart(Menu menu) {
+    private void removeCartItem(CartItem item) {
         if (currentCart != null) {
-            cartService.removeMenuFromCart(currentCart, menu);
+            cartService.removeCartItem(currentCart, item);
             updateCartDisplay();
 
             Notification.show("Menü aus dem Warenkorb entfernt",

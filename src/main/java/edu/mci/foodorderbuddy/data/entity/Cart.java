@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "cart")
@@ -15,6 +15,11 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartId;
 
+    // Beziehung zu CartItem - ein Warenkorb hat mehrere CartItems
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<CartItem> cartItems = new ArrayList<>();
+
+    // Behalten wir für Abwärtskompatibilität
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "cart_menu",
@@ -53,7 +58,40 @@ public class Cart {
     public Cart(){}
 
     public Long getCartId() {return cartId; }
-    public List<Menu> getCartList() {return cartList; }
+
+    // Neue Getter und Setter für CartItems
+    public List<CartItem> getCartItems() {return cartItems; }
+    public void setCartItems(List<CartItem> cartItems) {this.cartItems = cartItems; }
+
+    // Hilfsmethoden für die einfache Menüverwaltung
+    public void addCartItem(CartItem item) {
+        cartItems.add(item);
+        item.setCart(this);
+    }
+
+    public void removeCartItem(CartItem item) {
+        cartItems.remove(item);
+        item.setCart(null);
+    }
+
+    public CartItem findCartItemByMenu(Menu menu) {
+        return cartItems.stream()
+                .filter(item -> item.getMenu().getMenuId().equals(menu.getMenuId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Für Rückwärtskompatibilität: Stellt die Menü-Liste ohne Mengenangaben bereit
+    public List<Menu> getCartList() {
+        if (!cartItems.isEmpty()) {
+            return cartItems.stream()
+                    .map(CartItem::getMenu)
+                    .collect(Collectors.toList());
+        }
+        return cartList;
+    }
+
+    public void setCartList(List<Menu> cartList) {this.cartList = cartList; }
     public OrderHistory getOrderHistory() {return orderhistory; }
     public Double getCartPrice() {return cartPrice; }
     public Boolean getCartPayed() {return cartPayed; }
@@ -63,7 +101,6 @@ public class Cart {
     public String getPaymentReference() {return paymentReference; }
     public String getPaymentMethod() {return paymentMethod; }
 
-    public void setCartList(List<Menu> cartList) {this.cartList = cartList; }
     public void setOrderHistory(OrderHistory orderhistory) {this.orderhistory = orderhistory; }
     public void setCartPrice(Double cartPrice) {this.cartPrice = cartPrice; }
     public void setCartPayed(Boolean cartPayed) {this.cartPayed = cartPayed; }
