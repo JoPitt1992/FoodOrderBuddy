@@ -1,5 +1,8 @@
 package edu.mci.foodorderbuddy.views;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
@@ -20,6 +23,7 @@ import edu.mci.foodorderbuddy.data.entity.Cart;
 import edu.mci.foodorderbuddy.data.entity.OrderStatus;
 import edu.mci.foodorderbuddy.security.SecurityService;
 import edu.mci.foodorderbuddy.service.OrderHistoryService;
+import edu.mci.foodorderbuddy.service.OrderStatusBroadcaster;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +33,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 @RolesAllowed({"ROLE_USER", "ROLE_ADMIN"})
 @PageTitle("Bestellhistorie | Food Order Buddy")
@@ -43,6 +48,11 @@ public class OrderHistoryView extends VerticalLayout {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+
+    private UI ui;
+    private String currentUsername;
+
+    private List<Cart> currentOrders = List.of();
 
     public OrderHistoryView(OrderHistoryService orderHistoryService, SecurityService securityService) {
         this.orderHistoryService = orderHistoryService;
@@ -106,6 +116,17 @@ public class OrderHistoryView extends VerticalLayout {
 
                             cart.setCartOrderStatus(selectedStatus);
                             orderHistoryService.save(cart);
+
+                            //Broadcast
+                            OrderStatusBroadcaster.broadcast(
+                                    new OrderStatusBroadcaster.OrderStatusMessage(
+                                            cart.getCartId(),
+                                            selectedStatus,
+                                            cart.getOwner().getPersonUserName()
+                                    )
+                            );
+
+
                             Notification.show("Status geändert auf: " + selectedStatus.getDisplayName());
                             orderGrid.getDataProvider().refreshItem(cart);
                         });
@@ -175,31 +196,23 @@ public class OrderHistoryView extends VerticalLayout {
 
     private void loadOrders() {
         UserDetails user = securityService.getAuthenticatedUser();
+        String searchTerm = filterText.getValue();
 
-        if(isUserInRole("ROLE_ADMIN")){
-            String searchTerm = filterText.getValue();
+        if (isUserInRole("ROLE_ADMIN")) {
             List<Cart> orders = orderHistoryService.getAllOrdersByTerm(searchTerm);
+            currentOrders = orders;
+            orderGrid.setItems(orders);
 
-            if (orders.isEmpty()) {
-                orderGrid.setItems();
-                if (!searchTerm.isEmpty()) {
-                    Notification.show("Keine Bestellungen gefunden für: " + searchTerm);
-                }
-            } else {
-                orderGrid.setItems(orders);
+            if (orders.isEmpty() && !searchTerm.isEmpty()) {
+                Notification.show("Keine Bestellungen gefunden für: " + searchTerm);
             }
-        }
-        else if (user != null) {
-            String searchTerm = filterText.getValue();
+        } else if (user != null) {
             List<Cart> orders = orderHistoryService.searchOrdersByTerm(user.getUsername(), searchTerm);
+            currentOrders = orders;
+            orderGrid.setItems(orders);
 
-            if (orders.isEmpty()) {
-                orderGrid.setItems();
-                if (!searchTerm.isEmpty()) {
-                    Notification.show("Keine Bestellungen gefunden für: " + searchTerm);
-                }
-            } else {
-                orderGrid.setItems(orders);
+            if (orders.isEmpty() && !searchTerm.isEmpty()) {
+                Notification.show("Keine Bestellungen gefunden für: " + searchTerm);
             }
         }
     }
@@ -208,5 +221,51 @@ public class OrderHistoryView extends VerticalLayout {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(role));
+    }
+
+    /**
+     * Für Broadcasting
+     */
+
+
+    private final Consumer<OrderStatusBroadcaster.OrderStatusMessage> orderStatusListener = message -> {
+        if (!message.targetUsername.equals(currentUsername)) return;
+
+        Cart updatedCart = currentOrders.stream()
+                .filter(cart -> cart.getCartId().equals(message.cartId))
+                .findFirst()
+                .orElse(null);
+
+        if (updatedCart != null) {
+            updatedCart.setCartOrderStatus(message.newStatus);
+            ui.access(() -> {
+                orderGrid.getDataProvider().refreshItem(updatedCart);
+                Notification.show("Status Ihrer Bestellung wurde geändert auf: " + message.newStatus.getDisplayName(),
+                        4000, Notification.Position.MIDDLE);
+
+                ui.getPage().executeJs(
+                        "const audio = new Audio('/sounds/notify.wav'); audio.play().catch(err => console.warn('Audio not played:', err));"
+                );
+
+            });
+        }
+    };
+
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        ui = attachEvent.getUI();
+        UserDetails user = securityService.getAuthenticatedUser();
+        if (user != null) {
+            currentUsername = user.getUsername();
+            OrderStatusBroadcaster.register(orderStatusListener);
+        }
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        OrderStatusBroadcaster.unregister(orderStatusListener);
+        super.onDetach(detachEvent);
     }
 }
