@@ -136,6 +136,20 @@ public class OrderHistoryView extends VerticalLayout {
             .setHeader("Status")
             .setSortable(false)
             .setFlexGrow(1);
+
+            orderGrid.addColumn(new ComponentRenderer<>(cart -> {
+                        Button viewButton = new Button("Details");
+                        viewButton.setIcon(new Icon(VaadinIcon.SEARCH));
+                        viewButton.addClickListener(e ->
+                                getUI().ifPresent(ui -> ui.navigate("order-details/" + cart.getCartId()))
+                        );
+                        return viewButton;
+                    }))
+                    .setHeader("Aktionen")
+                    .setTextAlign(ColumnTextAlign.CENTER)
+                    .setWidth("150px")
+                    .setFlexGrow(0);
+
         } else {
             orderGrid.addColumn(new ComponentRenderer<>(cart -> {
                 Span statusLabel;
@@ -160,20 +174,21 @@ public class OrderHistoryView extends VerticalLayout {
             .setHeader("Status")
             .setSortable(true)
             .setFlexGrow(1);
+
+            orderGrid.addColumn(new ComponentRenderer<>(cart -> {
+                        Button viewButton = new Button("Details");
+                        viewButton.setIcon(new Icon(VaadinIcon.SEARCH));
+                        viewButton.addClickListener(e ->
+                                getUI().ifPresent(ui -> ui.navigate("order-details/" + cart.getCartId()))
+                        );
+                        return viewButton;
+                    }))
+                    .setHeader("Aktionen")
+                    .setTextAlign(ColumnTextAlign.CENTER)
+                    .setWidth("150px")
+                    .setFlexGrow(0);
         }
 
-        orderGrid.addColumn(new ComponentRenderer<>(cart -> {
-                    Button viewButton = new Button("Details");
-                    viewButton.setIcon(new Icon(VaadinIcon.SEARCH));
-                    viewButton.addClickListener(e ->
-                        getUI().ifPresent(ui -> ui.navigate("order-details/" + cart.getCartId()))
-                    );
-                    return viewButton;
-                }))
-                .setHeader("Aktionen")
-                .setTextAlign(ColumnTextAlign.CENTER)
-                .setWidth("150px")
-                .setFlexGrow(0);
     }
 
     private void configureFilter() {

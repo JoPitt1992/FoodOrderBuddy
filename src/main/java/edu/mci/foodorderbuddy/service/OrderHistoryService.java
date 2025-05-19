@@ -186,4 +186,9 @@ public class OrderHistoryService {
     public void save(Cart cart) {
         cartRepository.save(cart);
     }
+
+
+    public void delete(Cart cart) {
+        cartRepository.delete(cart);
+    }
 }
