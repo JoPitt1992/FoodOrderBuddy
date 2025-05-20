@@ -40,12 +40,23 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     @Query("SELECT COUNT(c) FROM Cart c WHERE c.cartPaydate BETWEEN :startDate AND :endDate")
     Long countOrdersInYear(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
-    @Query("SELECT m, COUNT(m) as count FROM Cart c JOIN c.cartList m GROUP BY m ORDER BY count DESC")
+    @Query("SELECT m, SUM(ci.quantity) as totalQuantity FROM Cart c JOIN c.cartItems ci JOIN ci.menu m GROUP BY m ORDER BY totalQuantity DESC limit 3")
     List<Object[]> findTop3MostSoldDishes();
 
-    @Query("SELECT m, COUNT(m) as count FROM Cart c JOIN c.cartList m GROUP BY m ORDER BY count ASC")
+    @Query("SELECT m, SUM(ci.quantity) as totalQuantity FROM Cart c JOIN c.cartItems ci JOIN ci.menu m GROUP BY m ORDER BY totalQuantity ASC limit 3")
     List<Object[]> findTop3LeastSoldDishes();
 
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.cartPayed = false")
+    Long countUnpaidCarts();
+
+    @Query("SELECT AVG(SIZE(c.cartItems)) FROM Cart c")
+    Double calculateAverageOrderQuantityPerCart();
+
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.cartOrderStatus = 'IN_BEARBEITUNG'")
+    Long countCartsInProcess();
+
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.cartOrderStatus = 'IN_ZUSTELLUNG'")
+    Long countCartsInDelivery();
 
     List<Cart> findAll();
 

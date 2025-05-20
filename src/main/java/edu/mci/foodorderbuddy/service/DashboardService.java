@@ -21,25 +21,26 @@ import java.util.List;
 public class DashboardService {
 
     private final CartRepository cartRepository;
-    private final PersonRepository personRepository;
-    private final OrderHistoryRepository orderHistoryRepository;
+
 
     @Autowired
-    public DashboardService(CartRepository cartRepository, PersonRepository personRepository, OrderHistoryRepository orderHistoryRepository) {
+    public DashboardService(CartRepository cartRepository) {
         this.cartRepository = cartRepository;
-        this.personRepository = personRepository;
-        this.orderHistoryRepository = orderHistoryRepository;
     }
 
-    public Double getAverageOrderValue() {
-        // Hole alle Bestellungen aus der Datenbank
-        List<Cart> carts = cartRepository.findAll();
+    public Long countCartsInProcess(){
+        return cartRepository.countCartsInProcess();
+    }
 
-        // Verwende Java Streams und Lambda-Ausdrücke, um den Durchschnitt zu berechnen
-        return carts.stream()
-                .mapToDouble(Cart::getCartPrice)
-                .average()
-                .orElse(0.0); // Gib 0.0 zurück, wenn keine Bestellungen vorhanden sind
+    public Long countCartsInDelivery(){
+        return cartRepository.countCartsInDelivery();
+    }
+    public Long countUnpaidCarts(){
+        return cartRepository.countUnpaidCarts();
+    }
+
+    public Double calculateAverageOrderQuantityPerCart(){
+        return cartRepository.calculateAverageOrderQuantityPerCart();
     }
 
     public Cart getMaxOrderValue(){
@@ -77,7 +78,6 @@ public class DashboardService {
         YearMonth yearMonth = YearMonth.of(year, month);
         Date firstDayOfMonth = getMonthlyDateStart(yearMonth);
         Date lastDayOfMonth = getMonthlyDateEnd(yearMonth);
-
         return cartRepository.countOrdersInMonth(firstDayOfMonth, lastDayOfMonth);
     }
 

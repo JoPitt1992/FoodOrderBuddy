@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import edu.mci.foodorderbuddy.data.entity.Cart;
 import edu.mci.foodorderbuddy.data.entity.Menu;
 import edu.mci.foodorderbuddy.data.repository.CartRepository;
 import edu.mci.foodorderbuddy.service.CartService;
@@ -15,6 +16,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -28,14 +31,10 @@ import java.util.stream.Collectors;
 @Route(value = "dashboard", layout = MainLayout.class)
 @PageTitle("Admin Dashboard | Food Order Buddy")
 public class DashboardView extends VerticalLayout {
-    private final MenuService service;
     private final DashboardService ds;
-    private final CartService cartService;
 
-    public DashboardView(MenuService menuService, DashboardService dashboardService, CartService cartService, CartService cartService1) {
-        this.service = menuService;
+    public DashboardView(DashboardService dashboardService) {
         this.ds = dashboardService;
-        this.cartService = cartService1;
         UI.getCurrent().getPage().addJavaScript("https://www.gstatic.com/charts/loader.js");
         addClassName("dashboard-view");
         HorizontalLayout dataLine = new HorizontalLayout();
@@ -46,10 +45,44 @@ public class DashboardView extends VerticalLayout {
 
         Component month = createMonthlyOverhead(currentYear, currentMonth);
         Component year = createYearlyOverhead(currentYear, currentMonth);
+        Component general = createGeneralOverview(currentYear);
         Component pieCharts = createPieCharts();
+        Component orderStatusCharts = createOrderStatusCharts();
+        dataLine.add(month, year, general);
+        add(dataLine, pieCharts, orderStatusCharts);
+    }
 
-        dataLine.add(month, year);
-        add(dataLine, pieCharts);
+    private Component createOrderStatusCharts() {
+        Div cartsComp = new Div();
+        Map<String, Number> data = new HashMap<>();
+
+        Long inDelivery = ds.countCartsInDelivery();
+        Long inProcess = ds.countCartsInProcess();
+        System.out.print("Process" + inProcess);
+        System.out.print("Delivery" + inDelivery);
+        data.put("In Lieferung", inDelivery);
+        data.put("In Bearbeitung", inProcess);
+
+        cartsComp.add(createGaugeChartGreenRed("Bestellstatus", data));
+        return cartsComp;
+    }
+
+    private Component createGeneralOverview(int currentYear) {
+        Div generalComp = createCard("Allgemeine Infos");
+        Cart bestCart = ds.getMaxOrderValue();
+        Double price = bestCart.getCartPrice();
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+        String bestRevenue = currencyFormat.format(price);
+
+        Long unpaid = ds.countUnpaidCarts();
+        Double avgItemsPerCart = ds.calculateAverageOrderQuantityPerCart();
+
+        generalComp.add(
+                createMetricRow("Höchster Einkaufspreis: ", bestRevenue),
+                createMetricRow("Unbezahlre Rechnungen: ", unpaid.toString()),
+                createMetricRow("Durchschnittliche Bestellgröße: ", String.format("%.2f", avgItemsPerCart))
+        );
+        return generalComp;
     }
 
     private Component createMonthlyOverhead(int year, int month){
@@ -68,9 +101,9 @@ public class DashboardView extends VerticalLayout {
         String formattedAvg = currencyFormat.format(avgOrderValue);
 
         monthComp.add(
-                createMetricRow("Umsatz:", formattedRevenue),
-                createMetricRow("Bestellungen:", orders.toString()),
-                createMetricRow("Bestellwert im Durchschnitt:", formattedAvg)
+                createMetricRow("Umsatz: ", formattedRevenue),
+                createMetricRow("Bestellungen: ", orders.toString()),
+                createMetricRow("Bestellwert im Durchschnitt: ", formattedAvg)
         );
 
 
@@ -93,9 +126,9 @@ public class DashboardView extends VerticalLayout {
         String formattedAvg = currencyFormat.format(avgOrderValue);
 
         yearComp.add(
-                createMetricRow("Umsatz:", formattedRevenue),
-                createMetricRow("Bestellungen:", orders.toString()),
-                createMetricRow("Bestellwert im Durchschnitt:", formattedAvg)
+                createMetricRow("Umsatz: ", formattedRevenue),
+                createMetricRow("Bestellungen: ", orders.toString()),
+                createMetricRow("Bestellwert im Durchschnitt: ", formattedAvg)
         );
 
         return yearComp;
@@ -211,61 +244,17 @@ public class DashboardView extends VerticalLayout {
         return chartContainer;
     }
 
-    public Component createGaugeChartRedGreen(String title, Map<String, Number> data) {
-        Div gaugeContainer = new Div();
-        String uniqueId = "gauge-" + UUID.randomUUID(); // Eindeutige ID
-        gaugeContainer.setId(uniqueId);
-
-        // CSS für die Größe des Containers
-        gaugeContainer.getStyle()
-                .set("width", "400px")
-                .set("height", "120px")
-                .set("display", "inline-block"); // Für nebeneinander angeordnete Charts
-
-        // JavaScript-Code für das Tachometerdiagramm
-        String jsCode =
-                "if (typeof google !== 'undefined') {" +
-                        "   google.charts.load('current', {'packages':['gauge']});" +
-                        "   google.charts.setOnLoadCallback(function() {" +
-                        "       drawGaugeChart('" + uniqueId + "');" +
-                        "   });" +
-                        "}" +
-                        "function drawGaugeChart(containerId) {" +
-                        "   var data = google.visualization.arrayToDataTable([" +
-                        "       ['Label', 'Value']," +
-                        data.entrySet().stream()
-                                .map(e -> "['" + e.getKey() + "', " + e.getValue() + "]")
-                                .collect(Collectors.joining(",")) +
-                        "   ]);" +
-                        "   var options = {" +
-                        "       width: 400," +
-                        "       height: 120," +
-                        "       greenFrom: 0, greenTo: 75," +
-                        "       redFrom: 90, redTo: 200," +    // Roter Bereich
-                        "       yellowFrom: 75, yellowTo: 90," + // Gelber Bereich
-                        "       minorTicks: 5" +               // Kleine Skalenstriche
-                        "   };" +
-                        "   var chart = new google.visualization.Gauge(document.getElementById(containerId));" +
-                        "   chart.draw(data, options);" +
-                        "}";
-
-        // JavaScript ausführen
-        gaugeContainer.getElement().executeJs(jsCode);
-
-        return gaugeContainer;
-    }
-
     public Component createGaugeChartGreenRed(String title, Map<String, Number> data) {
         Div gaugeContainer = new Div();
         String uniqueId = "gauge-" + UUID.randomUUID(); // Eindeutige ID
         gaugeContainer.setId(uniqueId);
-        int minValue = 10;
-        int maxValue = 200;
+        int minValue = 0;
+        int maxValue = 30;
 
         // CSS für die Größe des Containers
         gaugeContainer.getStyle()
-                .set("width", "400px")
-                .set("height", "120px")
+                .set("width", "500px")
+                .set("height", "200px")
                 .set("display", "inline-block"); // Für nebeneinander angeordnete Charts
 
         // JavaScript-Code für das Tachometerdiagramm
@@ -284,8 +273,8 @@ public class DashboardView extends VerticalLayout {
                                 .collect(Collectors.joining(",")) +
                         "   ]);" +
                         "   var options = {" +
-                        "       width: 400," +
-                        "       height: 120," +
+                        "       width: 500," +
+                        "       height: 200," +
                         "       min: min," +      // Minimalwert
                         "       max: max," +      // Maximalwert
                         "       redFrom: max * 0.9, redTo: max," +     // Rot ab 90% des Maximalwerts
@@ -298,54 +287,8 @@ public class DashboardView extends VerticalLayout {
 
         // JavaScript ausführen
         gaugeContainer.getElement().executeJs(jsCode);
-
         return gaugeContainer;
     }
-
-    public Component createGaugeChartRedGreenRed(String title, Map<String, Number> data) {
-        Div gaugeContainer = new Div();
-        String uniqueId = "gauge-" + UUID.randomUUID(); // Eindeutige ID
-        gaugeContainer.setId(uniqueId);
-
-        // CSS für die Größe des Containers
-        gaugeContainer.getStyle()
-                .set("width", "400px")
-                .set("height", "120px")
-                .set("display", "inline-block"); // Für nebeneinander angeordnete Charts
-
-        // JavaScript-Code für das Tachometerdiagramm
-        String jsCode =
-                "if (typeof google !== 'undefined') {" +
-                        "   google.charts.load('current', {'packages':['gauge']});" +
-                        "   google.charts.setOnLoadCallback(function() {" +
-                        "       drawGaugeChart('" + uniqueId + "');" +
-                        "   });" +
-                        "}" +
-                        "function drawGaugeChart(containerId) {" +
-                        "   var data = google.visualization.arrayToDataTable([" +
-                        "       ['Label', 'Value']," +
-                        data.entrySet().stream()
-                                .map(e -> "['" + e.getKey() + "', " + e.getValue() + "]")
-                                .collect(Collectors.joining(",")) +
-                        "   ]);" +
-                        "   var options = {" +
-                        "       width: 400," +
-                        "       height: 120," +
-                        "       greenFrom: 0, greenTo: 75," +
-                        "       redFrom: 90, redTo: 100," +    // Roter Bereich
-                        "       yellowFrom: 75, yellowTo: 90," + // Gelber Bereich
-                        "       minorTicks: 5" +               // Kleine Skalenstriche
-                        "   };" +
-                        "   var chart = new google.visualization.Gauge(document.getElementById(containerId));" +
-                        "   chart.draw(data, options);" +
-                        "}";
-
-        // JavaScript ausführen
-        gaugeContainer.getElement().executeJs(jsCode);
-
-        return gaugeContainer;
-    }
-
 }
 
 
