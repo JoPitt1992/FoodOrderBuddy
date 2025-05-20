@@ -1,6 +1,6 @@
 package edu.mci.foodorderbuddy.views;
 
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.html.Anchor;
@@ -32,11 +32,17 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         // Important: Make sure this is set to handle the redirect after login
         login.setForgotPasswordButtonVisible(false);
 
+        // Logo hinzufügen
+        Image logo = new Image("icons/icon.png", "Food Order Buddy Logo");
+        logo.setHeight("200px"); // Höhe anpassen nach Bedarf
+        logo.getStyle().set("margin-bottom", "20px"); // Etwas Abstand zum Login-Formular
+
         Anchor registryLink = new Anchor("registry", "Neu registrieren");
 
-        add(new H2("Food-Order-Buddy"),
-                login,
-                registryLink);
+        // H2-Überschrift entfernt, nur Logo, Login-Formular und Registrierungslink
+        add(logo,
+            login,
+            registryLink);
 
         this.personRepository = personRepository;
     }
