@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Entity
 @Table(name = "cart")
 public class Cart {
@@ -41,8 +42,9 @@ public class Cart {
     @Column(name = "cart_paydate")
     private Date cartPaydate;
 
-    @Column(name = "cart_delivered")
-    private Boolean cartDelivered;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cart_order_status")
+    private OrderStatus cartOrderStatus;
 
     @ManyToOne
     @JoinColumn(name = "person_id")
@@ -96,7 +98,7 @@ public class Cart {
     public Double getCartPrice() {return cartPrice; }
     public Boolean getCartPayed() {return cartPayed; }
     public Date getCartPaydate() {return cartPaydate; }
-    public Boolean getCartDelivered() {return cartDelivered; }
+    public OrderStatus getCartOrderStatus() {return cartOrderStatus; }
     public Person getOwner() {return owner; }
     public String getPaymentReference() {return paymentReference; }
     public String getPaymentMethod() {return paymentMethod; }
@@ -105,7 +107,7 @@ public class Cart {
     public void setCartPrice(Double cartPrice) {this.cartPrice = cartPrice; }
     public void setCartPayed(Boolean cartPayed) {this.cartPayed = cartPayed; }
     public void setCartPaydate(Date cartPaydate) {this.cartPaydate = cartPaydate; }
-    public void setCartDelivered(Boolean cartDelivered) {this.cartDelivered = cartDelivered; }
+    public void setCartOrderStatus(OrderStatus cartOrderStatus) {this.cartOrderStatus = cartOrderStatus;}
     public void setOwner(Person owner) {this.owner = owner; }
     public void setPaymentReference(String paymentReference) {this.paymentReference = paymentReference; }
     public void setPaymentMethod(String paymentMethod) {this.paymentMethod = paymentMethod; }

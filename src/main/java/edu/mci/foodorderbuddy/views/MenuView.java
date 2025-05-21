@@ -238,4 +238,9 @@ public class MenuView extends VerticalLayout {
         return auth != null && auth.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(role));
     }
+
+    //For Testing
+    public HorizontalLayout getToolbarForTesting() {
+        return getToolbar(); // oder speichere `getToolbar()` als Feld beim Konstruktoraufruf
+    }
 }

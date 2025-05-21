@@ -1,9 +1,6 @@
 package edu.mci.foodorderbuddy.service;
 
-import edu.mci.foodorderbuddy.data.entity.Cart;
-import edu.mci.foodorderbuddy.data.entity.CartItem;
-import edu.mci.foodorderbuddy.data.entity.Menu;
-import edu.mci.foodorderbuddy.data.entity.Person;
+import edu.mci.foodorderbuddy.data.entity.*;
 import edu.mci.foodorderbuddy.data.repository.CartItemRepository;
 import edu.mci.foodorderbuddy.data.repository.CartRepository;
 import edu.mci.foodorderbuddy.data.repository.PersonRepository;
@@ -82,7 +79,7 @@ public class CartService {
             newCart.setCartList(new ArrayList<>());
             newCart.setCartPrice(0.0);
             newCart.setCartPayed(false);
-            newCart.setCartDelivered(false);
+            newCart.setCartOrderStatus(OrderStatus.IN_BEARBEITUNG);
 
             Cart savedCart = cartRepository.save(newCart);
             System.out.println("getOrCreateCart: Neuer Warenkorb erstellt - ID: " + savedCart.getCartId());

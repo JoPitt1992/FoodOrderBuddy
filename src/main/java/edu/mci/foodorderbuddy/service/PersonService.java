@@ -16,10 +16,20 @@ public class PersonService {
     }
 
     public void updateUser(Person updatedUser) {
+        if (updatedUser == null || updatedUser.getPersonId() == null) {
+            throw new IllegalArgumentException("Person or ID must not be null");
+        }
         personRepository.save(updatedUser);
     }
 
     public Optional<Person> findByUsername(String username) {
+        if (username == null || username.isBlank()) {
+            return Optional.empty();
+        }
         return personRepository.findByPersonUserName(username);
+    }
+
+    public boolean userExists(String username) {
+        return findByUsername(username).isPresent();
     }
 }

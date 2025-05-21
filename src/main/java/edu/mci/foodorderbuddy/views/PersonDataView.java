@@ -10,8 +10,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValueContext;
-import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import edu.mci.foodorderbuddy.data.entity.Person;
@@ -27,19 +25,19 @@ import java.util.Optional;
 @PageTitle("My Profile | Food Order Buddy")
 public class PersonDataView extends VerticalLayout {
 
-    private final TextField personFirstName = new TextField("Vorname *");
-    private final TextField personLastName = new TextField("Nachname *");
-    private final TextField personUserName = new TextField("Username *");
-    private final TextField personEmail = new TextField("E-Mail Adresse *");
-    private final TextField personAddress = new TextField("Adresse");
-    private final TextField personPostalCode = new TextField("Postleitzahl");
-    private final TextField personCity = new TextField("Stadt");
-    private final TextField personPhonenumber = new TextField("Telefonnummer");
-    private final Button save = new Button("Benutzerdaten aktualisieren");
+    protected final TextField personFirstName = new TextField("Vorname *");
+    protected final TextField personLastName = new TextField("Nachname *");
+    protected final TextField personUserName = new TextField("Username *");
+    protected final TextField personEmail = new TextField("E-Mail Adresse *");
+    protected final TextField personAddress = new TextField("Adresse");
+    protected final TextField personPostalCode = new TextField("Postleitzahl");
+    protected final TextField personCity = new TextField("Stadt");
+    protected final TextField personPhonenumber = new TextField("Telefonnummer");
+    protected final Button save = new Button("Benutzerdaten aktualisieren");
 
-    private final Binder<Person> binder = new Binder<>(Person.class);
-    private final PersonService personService;
-    private Person currentPerson;
+    protected final Binder<Person> binder = new Binder<>(Person.class);
+    protected final PersonService personService;
+    protected Person currentPerson;
 
     public PersonDataView(PersonService personService) {
         this.personService = personService;
@@ -47,66 +45,69 @@ public class PersonDataView extends VerticalLayout {
         add(createFormLayout());
         add(createSaveButton());
 
-        // Hole aktuell eingeloggten Benutzer
-        String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+        initUserData();
+        save.addClickListener(event -> saveProfileChanges());
+    }
+
+    protected void initUserData() {
+        String username = getCurrentUsername();
         Optional<Person> optionalPerson = personService.findByUsername(username);
 
         if (optionalPerson.isPresent()) {
             currentPerson = optionalPerson.get();
-
-            binder.forField(personFirstName).bind(Person::getPersonFirstName, Person::setPersonFirstName);
-            binder.forField(personLastName).bind(Person::getPersonLastName, Person::setPersonLastName);
-            binder.forField(personUserName).bind(Person::getPersonUserName, Person::setPersonUserName);
-            binder.forField(personEmail).bind(Person::getPersonEmail, Person::setPersonEmail);
-            binder.forField(personPostalCode).bind(Person::getPersonPostalCode, Person::setPersonPostalCode);
-            binder.forField(personAddress).bind(Person::getPersonAddress, Person::setPersonAddress);
-            binder.forField(personCity).bind(Person::getPersonCity, Person::setPersonCity);
-            binder.forField(personPhonenumber).bind(Person::getPersonPhonenumber, Person::setPersonPhonenumber);
-
+            bindFields();
             binder.setBean(currentPerson);
-            save.setEnabled(true); // standardmäßig deaktiviert
+            save.setEnabled(true);
         } else {
             Notification.show("Benutzer nicht gefunden").addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
-
-        save.addClickListener(event -> saveProfileChanges());
     }
 
-    private Component header() {
+    protected String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        return "anonymous";
+    }
+
+    protected void bindFields() {
+        binder.bindInstanceFields(this);
+    }
+
+    protected Component header() {
         H2 header = new H2("Benutzerdaten bearbeiten");
         header.getStyle().set("text-align", "center");
         header.setWidthFull();
         return header;
     }
 
-    private Component createFormLayout() {
+    protected Component createFormLayout() {
         FormLayout formLayout = new FormLayout();
-        formLayout.add(personFirstName, personLastName,
+        formLayout.add(
+                personFirstName, personLastName,
                 personEmail, personAddress,
                 personPostalCode, personCity,
                 personPhonenumber
-                );
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 2)
         );
+        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
         formLayout.setWidth("700px");
         formLayout.getStyle().set("margin", "0 auto");
-
         return formLayout;
     }
 
-    private Button createSaveButton() {
+    protected Button createSaveButton() {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         save.setWidth("700px");
         save.getStyle().set("margin", "0 auto");
         return save;
     }
 
-    private void saveProfileChanges() {
+    public void saveProfileChanges() {
         if (binder.validate().isOk()) {
             personService.updateUser(binder.getBean());
-            binder.readBean(currentPerson); // Änderungen neu einlesen
-            save.setEnabled(false); // Button wieder deaktivieren
+            binder.readBean(currentPerson);
+            save.setEnabled(false);
             Notification.show("Benutzerdaten erfolgreich aktualisiert")
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         } else {
@@ -114,4 +115,10 @@ public class PersonDataView extends VerticalLayout {
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
+
+    // For test access
+    public TextField getPersonFirstNameField() { return personFirstName; }
+    public Button getSaveButton() { return save; }
+    public Binder<Person> getBinder() { return binder; }
+    public Person getCurrentPerson() { return currentPerson; }
 }
