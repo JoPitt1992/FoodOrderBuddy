@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
     <!-- Project from https://start.vaadin.com/project/95a8f9ee-e1b0-45b3-a8b3-0d69186ac75c -->
     <groupId>com.example.application</groupId>
-    <artifactId>flowcrmtutorial</artifactId>
-    <name>flowcrmtutorial</name>
+    <artifactId>food-order-buddy</artifactId>
+    <name>food-order-buddy</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
