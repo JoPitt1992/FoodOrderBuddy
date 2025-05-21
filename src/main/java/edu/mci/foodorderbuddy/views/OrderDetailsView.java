@@ -176,8 +176,18 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         VerticalLayout leftInfo = new VerticalLayout();
         leftInfo.setPadding(false);
         leftInfo.setSpacing(false);
-        leftInfo.add(new Paragraph("Bestellnummer: " + cart.getPaymentReference()));
-        leftInfo.add(new Paragraph("Bestelldatum: " + dateFormat.format(cart.getCartPaydate())));
+        leftInfo.add(new Paragraph("Bestellnummer: " +
+                     (cart.getPaymentReference() != null ? cart.getPaymentReference() : "Noch nicht vergeben")));
+
+        // FIX: Handle null payment date
+        String paymentDateText = "Bestelldatum: ";
+        if (cart.getCartPaydate() != null) {
+            paymentDateText += dateFormat.format(cart.getCartPaydate());
+        } else {
+            paymentDateText += "Noch nicht abgeschlossen";
+        }
+        leftInfo.add(new Paragraph(paymentDateText));
+
         if (cart.getOwner() != null) {
             leftInfo.add(new Paragraph("Kunde: " + cart.getOwner().getPersonFirstName() + " " + cart.getOwner().getPersonLastName()));
         }
@@ -185,10 +195,21 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         VerticalLayout rightInfo = new VerticalLayout();
         rightInfo.setPadding(false);
         rightInfo.setSpacing(false);
-        statusLabel = new Span(cart.getCartOrderStatus().getDisplayName());
-        styleStatusLabel(statusLabel, cart.getCartOrderStatus());
+
+        // FIX: Handle null order status
+        OrderStatus orderStatus = cart.getCartOrderStatus() != null ?
+                                 cart.getCartOrderStatus() :
+                                 OrderStatus.IN_BEARBEITUNG;
+
+        statusLabel = new Span(orderStatus.getDisplayName());
+        styleStatusLabel(statusLabel, orderStatus);
         rightInfo.add(statusLabel);
-        rightInfo.add(new Paragraph("Zahlungsmethode: " + cart.getPaymentMethod()));
+
+        // FIX: Handle null payment method
+        String paymentMethod = cart.getPaymentMethod() != null ?
+                              cart.getPaymentMethod() :
+                              "Noch nicht bezahlt";
+        rightInfo.add(new Paragraph("Zahlungsmethode: " + paymentMethod));
 
         orderInfo.add(leftInfo, rightInfo);
 
@@ -241,8 +262,13 @@ public class OrderDetailsView extends VerticalLayout implements HasUrlParameter<
         Button backButton = new Button("Zurück zur Übersicht");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("orderhistory")));
 
+        // FIX: Check order status, handle null case
+        OrderStatus currentStatus = cart.getCartOrderStatus() != null ?
+                                   cart.getCartOrderStatus() :
+                                   OrderStatus.IN_BEARBEITUNG;
+
         // Wenn die Bestellung noch nicht als geliefert markiert ist und der Benutzer ein Admin ist
-        if (cart.getCartOrderStatus() != OrderStatus.ZUGESTELLT &&
+        if (currentStatus != OrderStatus.ZUGESTELLT &&
                 securityService.getAuthenticatedUser().getAuthorities().stream()
                         .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
 
